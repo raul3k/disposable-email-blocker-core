@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Raul3k\BlockDisposable\Core;
 
 use Pdp\Domain;
+use Pdp\ResolvedDomainName;
 use Pdp\Rules;
 use Raul3k\BlockDisposable\Core\Exceptions\InvalidDomainException;
 
@@ -95,6 +96,28 @@ class DomainNormalizer
     public function isValidEmailFormat(string $email): bool
     {
         return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+    }
+
+    /**
+     * Get the full resolved domain result from PSL.
+     * Returns null if the domain cannot be resolved.
+     */
+    public function getResolveResult(string $domain): ?ResolvedDomainName
+    {
+        $domain = strtolower(trim($domain));
+
+        if ($domain === '') {
+            return null;
+        }
+
+        $domain = $this->toAscii($domain);
+        $rules = $this->getRules();
+
+        try {
+            return $rules->resolve(Domain::fromIDNA2008($domain));
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     private function toAscii(string $domain): string
