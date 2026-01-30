@@ -1,0 +1,17 @@
+# Configuration for repo-file-sync-action
+# Add repositories that should receive updates from this template
+#
+# Documentation: https://github.com/BetaHuhn/repo-file-sync-action
+
+group:
+  - files:
+      - source: .github/ISSUE_TEMPLATE/
+        dest: .github/ISSUE_TEMPLATE/
+      - source: .github/PULL_REQUEST_TEMPLATE.md
+        dest: .github/PULL_REQUEST_TEMPLATE.md
+      - source: .coderabbit.yaml
+        dest: .coderabbit.yaml
+      - source: CONTRIBUTING.md
+        dest: CONTRIBUTING.md
+    repos: |
+      raul3k/rtrim
