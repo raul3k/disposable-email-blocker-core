@@ -1,0 +1,71 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Disposable Email Blocker Configuration
+ *
+ * Copy this file to your project root as "disposable-blocker.php"
+ * The update-domains command will automatically detect and use it.
+ *
+ * Usage:
+ *   vendor/bin/update-domains
+ */
+
+use Raul3k\BlockDisposable\Core\Parsers\JsonArrayParser;
+use Raul3k\BlockDisposable\Core\Parsers\TextLineParser;
+use Raul3k\BlockDisposable\Core\Sources\FileSource;
+use Raul3k\BlockDisposable\Core\Sources\UrlSource;
+
+return [
+    /**
+     * Custom sources to add.
+     *
+     * These are merged with the built-in sources:
+     * - disposable-email-domains
+     * - burner-email-providers
+     * - mailchecker
+     * - ivolo-disposable
+     * - fakefilter
+     */
+    'sources' => [
+        // Add a URL source with text format (one domain per line)
+        // new UrlSource(
+        //     url: 'https://example.com/my-domains.txt',
+        //     name: 'my-custom-source',
+        //     parser: new TextLineParser()
+        // ),
+
+        // Add a URL source with JSON format
+        // new UrlSource(
+        //     url: 'https://api.example.com/domains',
+        //     name: 'my-api-source',
+        //     parser: new JsonArrayParser()
+        // ),
+
+        // Add a local file source
+        // new FileSource(
+        //     path: __DIR__ . '/my-local-domains.txt',
+        //     name: 'local-domains'
+        // ),
+    ],
+
+    /**
+     * Built-in sources to exclude.
+     *
+     * Useful if you want to use only specific sources or
+     * if a source is causing issues.
+     */
+    'exclude_sources' => [
+        // 'fakefilter',
+        // 'ivolo-disposable',
+    ],
+
+    /**
+     * Custom output path for the generated domains file.
+     *
+     * If not set, defaults to the bundled file in vendor.
+     * You typically want to set this to a path in your project.
+     */
+    'output_path' => __DIR__ . '/storage/disposable_domains.txt',
+];

@@ -13,15 +13,50 @@ declare(strict_types=1);
  *   --dry-run       Show what would be done without writing
  *   --source=name   Only fetch from specific source (can be repeated)
  *   --output=path   Custom output path (default: src/Resources/disposable_domains.txt)
+ *   --config=path   Custom config file path
+ *   --no-config     Ignore config file
  *   --verbose       Show progress details
+ *
+ * Configuration:
+ *   Create a file named "disposable-blocker.php" in your project root:
+ *
+ *   ```php
+ *   return [
+ *       'sources' => [
+ *           new UrlSource('https://example.com/domains.txt', 'my-source'),
+ *       ],
+ *       'exclude_sources' => ['fakefilter'],
+ *       'output_path' => 'storage/disposable_domains.txt',
+ *   ];
+ *   ```
  */
 
-require_once __DIR__ . '/../vendor/autoload.php';
+// Find autoloader
+$autoloadPaths = [
+    __DIR__ . '/../vendor/autoload.php',      // Running from package directly
+    __DIR__ . '/../../../autoload.php',        // Running from vendor/bin
+    getcwd() . '/vendor/autoload.php',         // Running from project root
+];
 
+$autoloaded = false;
+foreach ($autoloadPaths as $autoloadPath) {
+    if (is_file($autoloadPath)) {
+        require_once $autoloadPath;
+        $autoloaded = true;
+        break;
+    }
+}
+
+if (!$autoloaded) {
+    fwrite(STDERR, "Could not find autoload.php. Run composer install first.\n");
+    exit(1);
+}
+
+use Raul3k\BlockDisposable\Core\Config\Configuration;
 use Raul3k\BlockDisposable\Core\Sources\SourceRegistry;
 
 // Parse arguments
-$options = getopt('', ['dry-run', 'source:', 'output:', 'verbose', 'help']);
+$options = getopt('', ['dry-run', 'source:', 'output:', 'config:', 'no-config', 'verbose', 'help']);
 $args = array_slice($argv, 1);
 
 if (isset($options['help']) || in_array('--help', $args) || in_array('-h', $args)) {
@@ -30,26 +65,57 @@ Update Disposable Domains List
 
 Usage:
   ./bin/update-domains [options]
+  vendor/bin/update-domains [options]
 
 Options:
   --dry-run       Show statistics without writing the file
   --source=name   Only fetch from specific source (can be repeated)
   --output=path   Custom output path
+  --config=path   Custom config file path
+  --no-config     Ignore configuration file
   --verbose       Show detailed progress
   --help          Show this help message
 
-Available sources:
-  - disposable-email-domains  (~170k domains)
-  - burner-email-providers    (~4k domains)
-  - mailchecker               (~30k domains, JSON)
-  - ivolo-disposable          (~3k domains, JSON)
-  - fakefilter                (~100k domains)
+Configuration File:
+  Create "disposable-blocker.php" in your project root:
+
+  <?php
+  use Raul3k\BlockDisposable\Core\Sources\UrlSource;
+  use Raul3k\BlockDisposable\Core\Sources\FileSource;
+
+  return [
+      // Add custom sources
+      'sources' => [
+          new UrlSource(
+              url: 'https://example.com/domains.txt',
+              name: 'my-custom-source'
+          ),
+          new FileSource(
+              path: __DIR__ . '/my-domains.txt',
+              name: 'local-domains'
+          ),
+      ],
+
+      // Exclude built-in sources (optional)
+      'exclude_sources' => ['fakefilter'],
+
+      // Custom output path (optional)
+      'output_path' => __DIR__ . '/storage/disposable_domains.txt',
+  ];
+
+Built-in Sources:
+  - disposable-email-domains  (~5k domains)
+  - burner-email-providers    (~27k domains)
+  - mailchecker               (~56k domains)
+  - ivolo-disposable          (~122k domains)
+  - fakefilter                (~9k domains)
 
 Examples:
   ./bin/update-domains
   ./bin/update-domains --dry-run
   ./bin/update-domains --source=disposable-email-domains --source=burner-email-providers
-  ./bin/update-domains --output=/tmp/domains.txt
+  ./bin/update-domains --output=storage/domains.txt
+  ./bin/update-domains --config=custom-config.php
 
 HELP;
     exit(0);
@@ -57,13 +123,8 @@ HELP;
 
 $dryRun = isset($options['dry-run']) || in_array('--dry-run', $args);
 $verbose = isset($options['verbose']) || in_array('--verbose', $args);
-$outputPath = $options['output'] ?? __DIR__ . '/../src/Resources/disposable_domains.txt';
-
-// Handle multiple --source options
-$selectedSources = [];
-if (isset($options['source'])) {
-    $selectedSources = is_array($options['source']) ? $options['source'] : [$options['source']];
-}
+$noConfig = isset($options['no-config']) || in_array('--no-config', $args);
+$configPath = $options['config'] ?? null;
 
 // Output helpers
 function info(string $message): void {
@@ -96,8 +157,60 @@ echo "║         Disposable Domains List Updater                    ║\n";
 echo "╚════════════════════════════════════════════════════════════╝\n";
 echo "\n";
 
+// Load configuration
+$config = null;
+if (!$noConfig) {
+    try {
+        if ($configPath !== null) {
+            $config = Configuration::fromFile($configPath);
+            info("Using config: $configPath");
+        } else {
+            $config = new Configuration();
+            if ($config->isLoaded()) {
+                info("Using config: " . $config->getConfigPath());
+            }
+        }
+    } catch (Throwable $e) {
+        error("Failed to load config: " . $e->getMessage());
+        exit(1);
+    }
+}
+
+// Setup registry with configuration
 $registry = new SourceRegistry();
+
+if ($config !== null && $config->isLoaded()) {
+    $config->applyTo($registry);
+
+    $customSources = $config->getSources();
+    if (!empty($customSources)) {
+        info("Custom sources: " . count($customSources));
+    }
+
+    $excluded = $config->getExcludeSources();
+    if (!empty($excluded)) {
+        info("Excluded sources: " . implode(', ', $excluded));
+    }
+}
+
 $availableSources = $registry->list();
+
+// Determine output path
+$defaultOutputPath = __DIR__ . '/../src/Resources/disposable_domains.txt';
+
+if (isset($options['output'])) {
+    $outputPath = $options['output'];
+} elseif ($config !== null && $config->getOutputPath() !== null) {
+    $outputPath = $config->getOutputPath();
+} else {
+    $outputPath = $defaultOutputPath;
+}
+
+// Handle multiple --source options
+$selectedSources = [];
+if (isset($options['source'])) {
+    $selectedSources = is_array($options['source']) ? $options['source'] : [$options['source']];
+}
 
 // Validate selected sources
 if (!empty($selectedSources)) {
@@ -113,7 +226,9 @@ if (!empty($selectedSources)) {
     $sourcesToFetch = $availableSources;
 }
 
+echo "\n";
 info("Sources to fetch: " . implode(', ', $sourcesToFetch));
+info("Output path: $outputPath");
 echo "\n";
 
 $allDomains = [];
@@ -123,7 +238,7 @@ foreach ($sourcesToFetch as $sourceName) {
     $source = $registry->get($sourceName);
 
     echo "Fetching: \033[1m$sourceName\033[0m\n";
-    progress("URL: " . ($source->getUrl() ?? 'N/A'));
+    progress("URL: " . ($source->getUrl() ?? 'local file'));
 
     $startTime = microtime(true);
     $count = 0;
@@ -161,19 +276,22 @@ echo "║                      Statistics                            ║\n";
 echo "╚════════════════════════════════════════════════════════════╝\n";
 echo "\n";
 
-$maxNameLen = max(array_map('strlen', array_keys($stats)));
-foreach ($stats as $name => $stat) {
-    $namePadded = str_pad($name, $maxNameLen);
-    if ($stat['status'] === 'ok') {
-        $countFormatted = number_format($stat['count']);
-        echo "  $namePadded : $countFormatted domains ({$stat['time']}s)\n";
-    } else {
-        echo "  $namePadded : \033[31mFAILED\033[0m - {$stat['error']}\n";
+if (!empty($stats)) {
+    $maxNameLen = max(array_map('strlen', array_keys($stats)));
+    foreach ($stats as $name => $stat) {
+        $namePadded = str_pad($name, $maxNameLen);
+        if ($stat['status'] === 'ok') {
+            $countFormatted = number_format($stat['count']);
+            echo "  $namePadded : $countFormatted domains ({$stat['time']}s)\n";
+        } else {
+            echo "  $namePadded : \033[31mFAILED\033[0m - {$stat['error']}\n";
+        }
     }
+
+    echo "\n";
+    echo "  " . str_repeat('─', $maxNameLen + 30) . "\n";
 }
 
-echo "\n";
-echo "  " . str_repeat('─', $maxNameLen + 30) . "\n";
 echo "  \033[1mTotal unique domains: " . number_format($totalDomains) . "\033[0m\n";
 echo "\n";
 
@@ -181,6 +299,15 @@ if ($dryRun) {
     warning("Dry run - no file written");
     echo "\n";
     exit(0);
+}
+
+// Ensure output directory exists
+$outputDir = dirname($outputPath);
+if (!is_dir($outputDir)) {
+    if (!mkdir($outputDir, 0755, true)) {
+        error("Failed to create output directory: $outputDir");
+        exit(1);
+    }
 }
 
 // Write file

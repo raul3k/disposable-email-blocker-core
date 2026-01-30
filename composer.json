@@ -33,6 +33,9 @@
         "psr/cache": "For PSR-6 cache adapter support",
         "psr/simple-cache": "For PSR-16 cache adapter support"
     },
+    "bin": [
+        "bin/update-domains"
+    ],
     "autoload": {
         "psr-4": {
             "Raul3k\\BlockDisposable\\Core\\": "src/"
