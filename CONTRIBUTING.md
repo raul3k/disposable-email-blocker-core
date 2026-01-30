@@ -1,45 +1,66 @@
 # Contributing
 
-Thank you for your interest in contributing! This document provides guidelines and information about contributing to this project.
+Thank you for considering contributing to this project! We welcome contributions from everyone.
 
 ## Code of Conduct
 
 Please be respectful and constructive in all interactions.
 
-## How to Contribute
+## Development Setup
 
-### Reporting Bugs
+1. Fork and clone the repository
+2. Install dependencies:
+   ```bash
+   composer install
+   ```
+3. Run tests to make sure everything works:
+   ```bash
+   composer test
+   ```
 
-1. Check if the bug has already been reported in [Issues](../../issues)
-2. If not, create a new issue using the **Bug Report** template
-3. Provide as much detail as possible
+## Code Quality
 
-### Suggesting Features
+Before submitting a pull request, ensure your code passes all quality checks:
 
-1. Check if the feature has already been suggested in [Issues](../../issues)
-2. If not, create a new issue using the **Feature Request** template
-3. Explain the use case and benefits
+```bash
+# Run all quality checks
+composer quality
 
-### Pull Requests
+# Or run them individually:
+composer test          # Run tests
+composer analyse       # Run PHPStan
+composer cs:check      # Check code style
+composer cs:fix        # Fix code style issues
+```
 
-1. Fork the repository
-2. Create a feature branch from `main`:
+## Pull Request Process
 
+1. Create a new branch for your feature or fix:
    ```bash
    git checkout -b feat/your-feature-name
    ```
 
-3. Make your changes
-4. Ensure tests pass (if applicable)
-5. Commit using [Conventional Commits](https://www.conventionalcommits.org/):
+2. Make your changes, ensuring:
+   - All tests pass
+   - Code style is consistent (run `composer cs:fix`)
+   - PHPStan passes at level 8
+   - New features have tests
+   - Documentation is updated if needed
 
+3. Commit using [Conventional Commits](https://www.conventionalcommits.org/):
    ```text
    feat: add new feature
    fix: resolve bug in component
    docs: update README
    ```
 
-6. Push and open a Pull Request
+4. Push your branch and create a pull request
+
+5. Fill out the pull request template with:
+   - Description of changes
+   - Related issue (if any)
+   - Testing done
+   - Breaking changes (if any)
 
 ## Commit Message Format
 
@@ -59,33 +80,41 @@ Format: `<type>(<scope>): <description>`
 | `test`     | Adding or updating tests                         |
 | `chore`    | Maintenance tasks, dependencies, configs         |
 
-### Examples
+## Coding Standards
 
-```text
-feat: add user authentication
-feat(api): add pagination support
-fix: resolve memory leak in parser
-fix(ui): correct button alignment
-docs: update installation instructions
-chore(deps): update dependencies
-```
+- Follow PSR-12 coding style
+- Use strict types: `declare(strict_types=1);`
+- Add type hints for all parameters and return types
+- Write descriptive method and variable names
+- Keep methods focused and small
+- Add PHPDoc comments for public methods
 
-## Development Setup
+## Testing
 
-<!-- Add your project-specific setup instructions here -->
+- Write tests for all new features
+- Maintain or improve code coverage
+- Use descriptive test method names
+- Test edge cases and error conditions
 
-```bash
-# Clone the repository
-git clone <repository-url>
-cd <repository-name>
+## Adding New Checkers
 
-# Install dependencies
-# ...
+When adding a new checker:
 
-# Run tests
-# ...
-```
+1. Implement `CheckerInterface`
+2. Add comprehensive tests
+3. Document usage in README
+4. Consider performance implications
+
+## Reporting Issues
+
+When reporting issues, please include:
+
+- PHP version
+- Package version
+- Steps to reproduce
+- Expected vs actual behavior
+- Relevant code snippets
 
 ## Questions?
 
-Feel free to open an issue for any questions or concerns.
+Feel free to open an issue for any questions or discussions.

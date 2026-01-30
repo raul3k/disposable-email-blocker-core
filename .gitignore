@@ -1,4 +1,16 @@
-# OS generated files
+# Dependencies
+/vendor/
+composer.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.sublime-*
+
+# OS
 .DS_Store
 .DS_Store?
 ._*
@@ -7,14 +19,21 @@
 ehthumbs.db
 Thumbs.db
 
-# Editor directories and files
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
+# Testing
+.phpunit.result.cache
+.phpunit.cache/
+coverage/
+coverage.xml
 
-# Environment files
+# Build
+/build/
+*.phar
+
+# Cache
+.php-cs-fixer.cache
+.phpstan.cache/
+
+# Environment
 .env
 .env.local
 .env.*.local

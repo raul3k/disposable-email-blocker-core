@@ -1,512 +1,345 @@
-# Project Name
+# Disposable Email Blocker - Core
 
-[![CI](../../actions/workflows/ci.yml/badge.svg)](../../actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
-Brief description of your project.
+Fast disposable/temporary email detection with full Public Suffix List (PSL) support, pattern matching, caching, and whitelist capabilities.
 
 ## Features
 
-- Feature 1
-- Feature 2
+- **Fast O(1) lookups** using hash-based domain checking
+- **Full PSL support** - correctly handles subdomains and public suffixes
+- **IDN/Punycode support** - international domain names are handled correctly
+- **Pattern matching** - detect suspicious domain patterns via regex
+- **Whitelist support** - allow specific domains to bypass checks
+- **Caching layer** - PSR-6/PSR-16 compatible cache adapters
+- **Detailed results** - `CheckResult` with confidence and matched checker info
+- **Batch operations** - efficiently check multiple emails at once
+- **Multiple checkers** - file-based, callback-based, or chain multiple checkers
+- **Extensible sources** - built-in sources + custom parsers for any format
+- **Framework agnostic** - use with any PHP project
 
 ## Installation
 
 ```bash
-# Add installation instructions
+composer require raul3k/disposable-email-blocker-core
 ```
 
-## Usage
+## Quick Start
+
+```php
+use Raul3k\BlockDisposable\Core\DisposableEmailChecker;
+
+$checker = DisposableEmailChecker::create();
+
+// Check if email is disposable
+$checker->isDisposable('test@mailinator.com'); // true
+$checker->isDisposable('test@gmail.com');      // false
+
+// Safe version (returns false for invalid emails instead of throwing)
+$checker->isDisposableSafe('invalid-email');   // false
+
+// Check domain directly
+$checker->isDomainDisposable('tempmail.com');  // true
+```
+
+## Detailed Check Results
+
+Get detailed information about the check result:
+
+```php
+use Raul3k\BlockDisposable\Core\DisposableEmailChecker;
+
+$checker = DisposableEmailChecker::create();
+
+// Get detailed result
+$result = $checker->check('test@mailinator.com');
+
+$result->isDisposable();      // true
+$result->isSafe();            // false
+$result->getDomain();         // 'mailinator.com'
+$result->getOriginalInput();  // 'test@mailinator.com'
+$result->getMatchedChecker(); // 'Raul3k\BlockDisposable\Core\Checkers\FileChecker'
+$result->getConfidence();     // 1.0 (high confidence)
+$result->isWhitelisted();     // false
+$result->toArray();           // array representation
+$result->toJson();            // JSON string
+```
+
+## Batch Operations
+
+Check multiple emails efficiently:
+
+```php
+use Raul3k\BlockDisposable\Core\DisposableEmailChecker;
+
+$checker = DisposableEmailChecker::create();
+
+$emails = [
+    'user1@gmail.com',
+    'user2@mailinator.com',
+    'user3@yahoo.com',
+];
+
+// Get boolean results
+$results = $checker->isDisposableBatch($emails);
+// ['user1@gmail.com' => false, 'user2@mailinator.com' => true, 'user3@yahoo.com' => false]
+
+// Get detailed results
+$results = $checker->checkBatch($emails);
+// ['user1@gmail.com' => CheckResult, 'user2@mailinator.com' => CheckResult, ...]
+```
+
+## Pattern-Based Detection
+
+Detect suspicious domain patterns using regex:
+
+```php
+use Raul3k\BlockDisposable\Core\DisposableEmailChecker;
+use Raul3k\BlockDisposable\Core\Checkers\{ChainChecker, FileChecker, PatternChecker};
+
+// Combine file-based checking with pattern matching
+$checker = DisposableEmailChecker::create(
+    new ChainChecker([
+        new FileChecker(__DIR__ . '/domains.txt'),
+        new PatternChecker(), // Uses default patterns
+    ])
+);
+
+// Default patterns detect:
+// - temp*, disposable*, throwaway*, fake*, junk*, spam*
+// - 10minutemail, 5minmail, etc.
+// - guerrillamail, yopmail, mailinator
+// - Suspicious TLDs: .tk, .ml, .ga, .cf, .gq
+
+// Add custom patterns
+$patternChecker = new PatternChecker();
+$patternChecker->addPattern('/^suspicious-/i');
+```
+
+## Whitelist Support
+
+Allow specific domains to bypass disposable checks:
+
+```php
+use Raul3k\BlockDisposable\Core\DisposableEmailChecker;
+use Raul3k\BlockDisposable\Core\Checkers\{FileChecker, WhitelistChecker};
+
+$innerChecker = new FileChecker(__DIR__ . '/domains.txt');
+$whitelistChecker = new WhitelistChecker($innerChecker, [
+    'company.com',      // Allow company.com and all subdomains
+    'partner.org',
+]);
+
+$checker = DisposableEmailChecker::create($whitelistChecker);
+
+// Even if mailinator.com is in the list, whitelist takes precedence
+$whitelistChecker->addToWhitelist('special-case.mailinator.com');
+
+// Check whitelist status
+$whitelistChecker->isWhitelisted('company.com');     // true
+$whitelistChecker->isWhitelisted('sub.company.com'); // true (parent is whitelisted)
+```
+
+## Caching
+
+Add caching to improve performance for repeated checks:
+
+```php
+use Raul3k\BlockDisposable\Core\DisposableEmailChecker;
+use Raul3k\BlockDisposable\Core\Checkers\{FileChecker, CachedChecker};
+use Raul3k\BlockDisposable\Core\Cache\{ArrayCache, FileCache};
+
+// In-memory cache (single request)
+$cache = new ArrayCache();
+
+// File-based cache (persistent)
+$cache = new FileCache('/path/to/cache/dir');
+
+// Wrap any checker with caching
+$innerChecker = new FileChecker(__DIR__ . '/domains.txt');
+$cachedChecker = new CachedChecker($innerChecker, $cache, ttl: 3600);
+
+$checker = DisposableEmailChecker::create($cachedChecker);
+```
+
+### PSR-6/PSR-16 Cache Adapters
+
+Use any PSR-compatible cache:
+
+```php
+use Raul3k\BlockDisposable\Core\Cache\{Psr6Adapter, Psr16Adapter};
+
+// PSR-16 (SimpleCache)
+$cache = new Psr16Adapter($yourPsr16Cache);
+
+// PSR-6 (CacheItemPool)
+$cache = new Psr6Adapter($yourPsr6Pool);
+
+$cachedChecker = new CachedChecker($innerChecker, $cache);
+```
+
+## Custom Checkers
+
+### Using a Callback (Redis, Database, API, etc.)
+
+```php
+use Raul3k\BlockDisposable\Core\DisposableEmailChecker;
+use Raul3k\BlockDisposable\Core\Checkers\CallbackChecker;
+
+// Redis example
+$checker = DisposableEmailChecker::create(
+    new CallbackChecker(fn($domain) => $redis->sismember('disposable_domains', $domain))
+);
+
+// Database example
+$checker = DisposableEmailChecker::create(
+    new CallbackChecker(fn($domain) => DB::table('disposable_domains')
+        ->where('domain', $domain)
+        ->exists())
+);
+```
+
+### Using a Custom File
+
+```php
+use Raul3k\BlockDisposable\Core\DisposableEmailChecker;
+use Raul3k\BlockDisposable\Core\Checkers\FileChecker;
+
+$checker = DisposableEmailChecker::create(
+    new FileChecker('/path/to/your/domains.txt')
+);
+```
+
+### Chaining Multiple Checkers
+
+```php
+use Raul3k\BlockDisposable\Core\DisposableEmailChecker;
+use Raul3k\BlockDisposable\Core\Checkers\{ChainChecker, FileChecker, PatternChecker, CallbackChecker};
+
+$checker = DisposableEmailChecker::create(
+    new ChainChecker([
+        new FileChecker('/path/to/domains.txt'),
+        new PatternChecker(),
+        new CallbackChecker(fn($domain) => $redis->sismember('extra_domains', $domain)),
+    ])
+);
+
+// After checking, you can see which checker matched
+$result = $checker->check('test@tempmail.com');
+$result->getMatchedChecker(); // e.g., 'PatternChecker'
+```
+
+## Working with Sources
+
+Sources provide lists of disposable domains. The library includes several pre-configured sources.
+
+### Available Built-in Sources
+
+| Source | Description | Size |
+|--------|-------------|------|
+| `disposable-email-domains` | Comprehensive list | ~170k |
+| `burner-email-providers` | Curated list | ~4k |
+| `mailchecker` | JSON format | ~30k |
+| `ivolo-disposable` | JSON format | ~3k |
+| `fakefilter` | Text format | ~100k |
+
+### Fetching from Sources
+
+```php
+use Raul3k\BlockDisposable\Core\Sources\SourceRegistry;
+
+$registry = new SourceRegistry();
+
+// List available sources
+$sources = $registry->list();
+// ['disposable-email-domains', 'burner-email-providers', 'mailchecker', ...]
+
+// Fetch domains from a source
+$source = $registry->get('disposable-email-domains');
+foreach ($source->fetch() as $domain) {
+    echo $domain . "\n";
+}
+```
+
+### Adding Custom Sources
+
+```php
+use Raul3k\BlockDisposable\Core\Sources\{SourceRegistry, UrlSource};
+use Raul3k\BlockDisposable\Core\Parsers\{TextLineParser, JsonArrayParser};
+
+$registry = new SourceRegistry();
+
+// Text file (one domain per line)
+$registry->register(new UrlSource(
+    url: 'https://example.com/domains.txt',
+    name: 'my-text-source',
+    parser: new TextLineParser()
+));
+
+// JSON array
+$registry->register(new UrlSource(
+    url: 'https://example.com/domains.json',
+    name: 'my-json-source',
+    parser: new JsonArrayParser()
+));
+
+// JSON with nested path
+$registry->register(new UrlSource(
+    url: 'https://api.example.com/data.json',
+    name: 'my-nested-json',
+    parser: new JsonArrayParser('response.data.domains')
+));
+```
+
+## Domain Normalization
+
+The library normalizes domains using the Public Suffix List to correctly extract registrable domains:
+
+```php
+use Raul3k\BlockDisposable\Core\DomainNormalizer;
+
+$normalizer = new DomainNormalizer();
+
+// Extract domain from email
+$normalizer->normalizeFromEmail('user@sub.example.com'); // 'example.com'
+
+// Normalize domain
+$normalizer->normalizeDomain('sub.example.com');   // 'example.com'
+$normalizer->normalizeDomain('sub.example.co.uk'); // 'example.co.uk'
+
+// Handle IDN
+$normalizer->normalizeDomain('пример.рф'); // 'xn--e1afmkfd.xn--p1ai'
+```
+
+## Framework Integration
+
+For Laravel and Symfony integration, see:
+- [raul3k/disposable-email-blocker-laravel](https://github.com/raul3k/disposable-email-blocker-laravel)
+- [raul3k/disposable-email-blocker-symfony](https://github.com/raul3k/disposable-email-blocker-symfony)
+
+## Development
 
 ```bash
-# Add usage examples
+# Install dependencies
+composer install
+
+# Run tests
+composer test
+
+# Run tests with coverage
+composer test:coverage
+
+# Static analysis
+composer analyse
+
+# Code style check
+composer cs:check
+
+# Fix code style
+composer cs:fix
+
+# Run all quality checks
+composer quality
 ```
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
-
----
-
-# Template Usage Guide
-
-> **Delete this section after creating your repository.**
-
-This is a GitHub template repository with pre-configured tooling for professional projects.
-
-## What's Included
-
-| File/Directory | Description |
-|----------------|-------------|
-| `.github/ISSUE_TEMPLATE/` | Bug report and feature request templates |
-| `.github/PULL_REQUEST_TEMPLATE.md` | Pull request template with checklist |
-| `.github/workflows/commitlint.yml` | Conventional commits validation |
-| `.github/workflows/release-please.yml` | Automated releases and changelog |
-| `.github/workflows/sync.yml` | Sync files to other repositories |
-| `.github/sync.yml` | Configuration for repo-file-sync-action |
-| `.github/dependabot.yml` | Automated GitHub Actions updates |
-| `.coderabbit.yaml` | AI code review configuration |
-| `CONTRIBUTING.md` | Contribution guidelines |
-| `SECURITY.md` | Security policy |
-| `LICENSE` | MIT License (update year and name) |
-| `.gitignore` | Common OS/editor ignores |
-
-## Setup Checklist
-
-After creating a repository from this template:
-
-- [ ] Update `README.md` with your project info (delete this section)
-- [ ] Update `LICENSE` with your name and year
-- [ ] Update `SECURITY.md` with supported versions
-- [ ] Configure CodeRabbit (see [CodeRabbit Setup](#coderabbit-setup))
-- [ ] Configure branch protection rules (see [Branch Protection](#branch-protection))
-- [ ] Add language-specific CI workflow (see [Adding CI Workflows](#adding-ci-workflows))
-- [ ] Add language-specific `.gitignore` entries
-- [ ] Update `release-type` in release-please workflow (see [Release Please](#release-please))
-
-## CodeRabbit Setup
-
-[CodeRabbit](https://coderabbit.ai) provides AI-powered code reviews on pull requests.
-
-### Installation
-
-1. Go to [github.com/apps/coderabbitai](https://github.com/apps/coderabbitai)
-2. Click **Install**
-3. Select your account/organization
-4. Choose **All repositories** or select specific ones
-5. Click **Install**
-
-### Configuration
-
-The `.coderabbit.yaml` file is pre-configured with:
-
-```yaml
-language: "en-US"
-reviews:
-  profile: "assertive"        # thorough reviews
-  high_level_summary: true    # summary at top of PR
-  auto_review:
-    enabled: true
-    drafts: false             # skip draft PRs
-    base_branches: [main]     # only review PRs to main
-```
-
-### Customization Options
-
-| Setting | Options | Description |
-|---------|---------|-------------|
-| `profile` | `chill`, `assertive`, `hardcore` | Review strictness |
-| `high_level_summary` | `true`/`false` | Add summary comment |
-| `poem` | `true`/`false` | Add a poem (fun!) |
-| `request_changes_workflow` | `true`/`false` | Block PR until resolved |
-
-[Full configuration docs](https://docs.coderabbit.ai/configuration)
-
-## Branch Protection
-
-Recommended settings for the `main` branch:
-
-1. Go to **Settings** > **Branches** > **Add rule**
-2. Branch name pattern: `main`
-3. Enable:
-   - [x] Require a pull request before merging
-   - [x] Require approvals (1+)
-   - [x] Require status checks to pass (select your CI jobs)
-   - [x] Require conversation resolution before merging
-   - [x] Do not allow bypassing the above settings
-
-## Adding CI Workflows
-
-This template includes only commit linting (language-agnostic). Add a `ci.yml` workflow for your stack:
-
-### Workflow Structure
-
-```yaml
-name: CI
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-
-jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      # Add linting steps
-
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      # Add test steps
-
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      # Add build steps
-```
-
-### Examples by Language
-
-<details>
-<summary><strong>Rust</strong></summary>
-
-```yaml
-jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
-      - run: cargo fmt --check
-      - run: cargo clippy -- -D warnings
-
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: cargo test
-
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: cargo build --release
-```
-
-Add to `.gitignore`:
-```
-/target/
-Cargo.lock  # for libraries only
-```
-
-</details>
-
-<details>
-<summary><strong>Node.js / TypeScript</strong></summary>
-
-```yaml
-jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run format:check  # if using prettier
-
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - run: npm ci
-      - run: npm test
-
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run build
-```
-
-Add to `.gitignore`:
-```
-node_modules/
-dist/
-.next/
-```
-
-Add to `dependabot.yml`:
-```yaml
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    commit-message:
-      prefix: "chore(deps)"
-```
-
-</details>
-
-<details>
-<summary><strong>Python</strong></summary>
-
-```yaml
-jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - run: pip install ruff
-      - run: ruff check .
-      - run: ruff format --check .
-
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - run: pip install -e ".[test]"
-      - run: pytest
-
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - run: pip install build
-      - run: python -m build
-```
-
-Add to `.gitignore`:
-```
-__pycache__/
-*.py[cod]
-.venv/
-venv/
-dist/
-*.egg-info/
-```
-
-Add to `dependabot.yml`:
-```yaml
-  - package-ecosystem: "pip"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    commit-message:
-      prefix: "chore(deps)"
-```
-
-</details>
-
-<details>
-<summary><strong>Go</strong></summary>
-
-```yaml
-jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: '1.22'
-      - uses: golangci/golangci-lint-action@v4
-
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: '1.22'
-      - run: go test ./...
-
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: '1.22'
-      - run: go build ./...
-```
-
-Add to `.gitignore`:
-```
-/bin/
-/dist/
-```
-
-Add to `dependabot.yml`:
-```yaml
-  - package-ecosystem: "gomod"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    commit-message:
-      prefix: "chore(deps)"
-```
-
-</details>
-
-## Release Please
-
-This template includes [release-please](https://github.com/googleapis/release-please) for automated releases.
-
-### How it Works
-
-1. Write commits using [Conventional Commits](https://www.conventionalcommits.org/)
-2. Release Please creates/updates a "Release PR" with changelog
-3. When you merge the Release PR, it creates a GitHub Release
-
-### Commit Types and Versioning
-
-| Commit Type | Version Bump | Example |
-|-------------|--------------|---------|
-| `feat:` | Minor (0.1.0 → 0.2.0) | `feat: add dark mode` |
-| `fix:` | Patch (0.1.0 → 0.1.1) | `fix: resolve memory leak` |
-| `feat!:` or `BREAKING CHANGE:` | Major (0.1.0 → 1.0.0) | `feat!: redesign API` |
-| `chore:`, `docs:`, `style:` | No release | `docs: update README` |
-
-### Release Types
-
-Update `release-type` in `.github/workflows/release-please.yml` based on your project:
-
-| Type | Use Case |
-|------|----------|
-| `simple` | Generic projects (default) |
-| `node` | Node.js (updates package.json) |
-| `python` | Python (updates setup.py/pyproject.toml) |
-| `rust` | Rust (updates Cargo.toml) |
-| `go` | Go modules |
-
-[See all release types](https://github.com/googleapis/release-please#release-types)
-
-## Syncing Template Updates
-
-[repo-file-sync-action](https://github.com/BetaHuhn/repo-file-sync-action) keeps all your repositories in sync with this template. When you improve a file here, it automatically creates PRs in your other repos.
-
-### Why Use This?
-
-Without sync:
-- You improve an issue template in this repo
-- Your 10 other repos still have the old template
-- You manually copy the file to each repo (tedious!)
-
-With sync:
-- You improve an issue template here
-- PRs are automatically created in all your repos
-- Just review and merge
-
-### Setup (one-time)
-
-1. **Create a Personal Access Token (PAT)**
-   - Go to [github.com/settings/tokens](https://github.com/settings/tokens)
-   - Click **Generate new token (classic)**
-   - Select scope: `repo` (full control of private repositories)
-   - Copy the token
-
-2. **Add the token as a secret**
-   - Go to this repository's **Settings** > **Secrets and variables** > **Actions**
-   - Click **New repository secret**
-   - Name: `GH_PAT`
-   - Value: paste your token
-
-### Adding Repositories to Sync
-
-Edit `.github/sync.yml`:
-
-```yaml
-group:
-  - files:
-      - source: .github/ISSUE_TEMPLATE/
-        dest: .github/ISSUE_TEMPLATE/
-      - source: .github/PULL_REQUEST_TEMPLATE.md
-        dest: .github/PULL_REQUEST_TEMPLATE.md
-      - source: .coderabbit.yaml
-        dest: .coderabbit.yaml
-      - source: CONTRIBUTING.md
-        dest: CONTRIBUTING.md
-    repos: |
-      raul3k/rtrim
-      raul3k/another-repo
-      raul3k/yet-another-repo
-```
-
-### Configuration Options
-
-```yaml
-group:
-  - files:
-      - source: file.md           # sync single file
-        dest: file.md
-      - source: folder/           # sync entire folder
-        dest: folder/
-      - source: src/config.json
-        dest: different/path.json # rename or move
-    repos: |
-      owner/repo-1
-      owner/repo-2
-
-  # You can have multiple groups with different files
-  - files:
-      - source: special-config.yml
-        dest: special-config.yml
-    repos: |
-      owner/special-repo
-```
-
-### How it Works
-
-```
-┌─────────────────────┐
-│   Template Repo     │
-│  (this repository)  │
-└──────────┬──────────┘
-           │ push to main
-           ▼
-┌─────────────────────┐
-│  Sync Workflow      │
-│  Detects changes    │
-└──────────┬──────────┘
-           │ creates PRs
-           ▼
-┌─────────────────────┐
-│  Target Repos       │
-│  repo-1, repo-2...  │
-│  ┌───────────────┐  │
-│  │ PR: Sync from │  │
-│  │ template      │  │
-│  └───────────────┘  │
-└─────────────────────┘
-```
-
-### Triggering Manually
-
-You can also trigger the sync manually:
-1. Go to **Actions** > **Sync Files**
-2. Click **Run workflow**
-
-### What Gets Synced
-
-By default, this template syncs:
-
-| File | Purpose |
-|------|---------|
-| `.github/ISSUE_TEMPLATE/` | Issue templates |
-| `.github/PULL_REQUEST_TEMPLATE.md` | PR template |
-| `.coderabbit.yaml` | CodeRabbit config |
-| `CONTRIBUTING.md` | Contribution guidelines |
-
-Modify `.github/sync.yml` to add or remove files.
+MIT License. See [LICENSE](LICENSE) for details.
