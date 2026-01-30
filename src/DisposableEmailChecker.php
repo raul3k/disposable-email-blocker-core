@@ -52,6 +52,22 @@ class DisposableEmailChecker
     }
 
     /**
+     * Get a fluent builder for creating a checker with custom configuration.
+     *
+     * @example
+     * $checker = DisposableEmailChecker::builder()
+     *     ->withBundledDomains()
+     *     ->withPatternDetection()
+     *     ->withWhitelist(['mycompany.com'])
+     *     ->withFileCache('/tmp/cache')
+     *     ->build();
+     */
+    public static function builder(): DisposableEmailCheckerBuilder
+    {
+        return new DisposableEmailCheckerBuilder();
+    }
+
+    /**
      * Check if an email address uses a disposable domain.
      *
      * @throws InvalidDomainException If the email is invalid
