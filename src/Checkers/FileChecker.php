@@ -41,6 +41,14 @@ class FileChecker implements CheckerInterface
         return count($this->domains ?? []);
     }
 
+    /**
+     * Get the file path.
+     */
+    public function getFilePath(): string
+    {
+        return $this->filePath;
+    }
+
     private function loadDomains(): void
     {
         if ($this->domains !== null) {
@@ -53,23 +61,23 @@ class FileChecker implements CheckerInterface
             );
         }
 
-        $content = file_get_contents($this->filePath);
-        if ($content === false) {
+        $handle = fopen($this->filePath, 'r');
+        if ($handle === false) {
             throw new RuntimeException(
-                sprintf('Failed to read domains file: %s', $this->filePath)
+                sprintf('Failed to open domains file: %s', $this->filePath)
             );
         }
 
-        $lines = explode("\n", $content);
         $domains = [];
 
-        foreach ($lines as $line) {
+        while (($line = fgets($handle)) !== false) {
             $domain = trim($line);
             if ($domain !== '' && $domain[0] !== '#') {
                 $domains[$domain] = true;
             }
         }
 
+        fclose($handle);
         $this->domains = $domains;
     }
 }
