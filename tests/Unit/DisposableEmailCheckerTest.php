@@ -154,7 +154,7 @@ class DisposableEmailCheckerTest extends TestCase
         $this->assertTrue($checker->isDisposable('user@mailinator.com'));
         $this->assertTrue($checker->isDisposable('user@guerrillamail.com'));
         $this->assertTrue($checker->isDisposable('user@10minutemail.com'));
-        $this->assertTrue($checker->isDisposable('user@tempmail.com'));
+        $this->assertTrue($checker->isDisposable('user@temp-mail.org'));
         $this->assertTrue($checker->isDisposable('user@yopmail.com'));
     }
 

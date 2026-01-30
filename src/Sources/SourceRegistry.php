@@ -98,12 +98,12 @@ class SourceRegistry
             parser: new TextLineParser()
         ));
 
-        // FGRibreau's mailchecker - JSON format
+        // FGRibreau's mailchecker - Text format
         // https://github.com/FGRibreau/mailchecker
         $this->register(new UrlSource(
-            url: 'https://raw.githubusercontent.com/FGRibreau/mailchecker/master/list.json',
+            url: 'https://raw.githubusercontent.com/FGRibreau/mailchecker/master/list.txt',
             name: 'mailchecker',
-            parser: new JsonArrayParser()
+            parser: new TextLineParser()
         ));
 
         // Ivolo disposable email domains

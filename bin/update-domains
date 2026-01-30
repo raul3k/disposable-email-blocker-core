@@ -1,0 +1,226 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Updates the bundled disposable domains list from external sources.
+ *
+ * Usage:
+ *   ./bin/update-domains [--dry-run] [--source=name] [--output=path]
+ *
+ * Options:
+ *   --dry-run       Show what would be done without writing
+ *   --source=name   Only fetch from specific source (can be repeated)
+ *   --output=path   Custom output path (default: src/Resources/disposable_domains.txt)
+ *   --verbose       Show progress details
+ */
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use Raul3k\BlockDisposable\Core\Sources\SourceRegistry;
+
+// Parse arguments
+$options = getopt('', ['dry-run', 'source:', 'output:', 'verbose', 'help']);
+$args = array_slice($argv, 1);
+
+if (isset($options['help']) || in_array('--help', $args) || in_array('-h', $args)) {
+    echo <<<HELP
+Update Disposable Domains List
+
+Usage:
+  ./bin/update-domains [options]
+
+Options:
+  --dry-run       Show statistics without writing the file
+  --source=name   Only fetch from specific source (can be repeated)
+  --output=path   Custom output path
+  --verbose       Show detailed progress
+  --help          Show this help message
+
+Available sources:
+  - disposable-email-domains  (~170k domains)
+  - burner-email-providers    (~4k domains)
+  - mailchecker               (~30k domains, JSON)
+  - ivolo-disposable          (~3k domains, JSON)
+  - fakefilter                (~100k domains)
+
+Examples:
+  ./bin/update-domains
+  ./bin/update-domains --dry-run
+  ./bin/update-domains --source=disposable-email-domains --source=burner-email-providers
+  ./bin/update-domains --output=/tmp/domains.txt
+
+HELP;
+    exit(0);
+}
+
+$dryRun = isset($options['dry-run']) || in_array('--dry-run', $args);
+$verbose = isset($options['verbose']) || in_array('--verbose', $args);
+$outputPath = $options['output'] ?? __DIR__ . '/../src/Resources/disposable_domains.txt';
+
+// Handle multiple --source options
+$selectedSources = [];
+if (isset($options['source'])) {
+    $selectedSources = is_array($options['source']) ? $options['source'] : [$options['source']];
+}
+
+// Output helpers
+function info(string $message): void {
+    echo "\033[34m[INFO]\033[0m $message\n";
+}
+
+function success(string $message): void {
+    echo "\033[32m[OK]\033[0m $message\n";
+}
+
+function warning(string $message): void {
+    echo "\033[33m[WARN]\033[0m $message\n";
+}
+
+function error(string $message): void {
+    echo "\033[31m[ERROR]\033[0m $message\n";
+}
+
+function progress(string $message): void {
+    global $verbose;
+    if ($verbose) {
+        echo "  → $message\n";
+    }
+}
+
+// Main
+echo "\n";
+echo "╔════════════════════════════════════════════════════════════╗\n";
+echo "║         Disposable Domains List Updater                    ║\n";
+echo "╚════════════════════════════════════════════════════════════╝\n";
+echo "\n";
+
+$registry = new SourceRegistry();
+$availableSources = $registry->list();
+
+// Validate selected sources
+if (!empty($selectedSources)) {
+    foreach ($selectedSources as $source) {
+        if (!in_array($source, $availableSources)) {
+            error("Unknown source: $source");
+            echo "Available sources: " . implode(', ', $availableSources) . "\n";
+            exit(1);
+        }
+    }
+    $sourcesToFetch = $selectedSources;
+} else {
+    $sourcesToFetch = $availableSources;
+}
+
+info("Sources to fetch: " . implode(', ', $sourcesToFetch));
+echo "\n";
+
+$allDomains = [];
+$stats = [];
+
+foreach ($sourcesToFetch as $sourceName) {
+    $source = $registry->get($sourceName);
+
+    echo "Fetching: \033[1m$sourceName\033[0m\n";
+    progress("URL: " . ($source->getUrl() ?? 'N/A'));
+
+    $startTime = microtime(true);
+    $count = 0;
+
+    try {
+        foreach ($source->fetch() as $domain) {
+            $domain = strtolower(trim($domain));
+            if ($domain !== '' && !str_starts_with($domain, '#')) {
+                $allDomains[$domain] = true;
+                $count++;
+            }
+        }
+
+        $elapsed = round(microtime(true) - $startTime, 2);
+        $stats[$sourceName] = ['count' => $count, 'time' => $elapsed, 'status' => 'ok'];
+        success("Fetched $count domains in {$elapsed}s");
+
+    } catch (Throwable $e) {
+        $stats[$sourceName] = ['count' => 0, 'time' => 0, 'status' => 'error', 'error' => $e->getMessage()];
+        error("Failed: " . $e->getMessage());
+    }
+
+    echo "\n";
+}
+
+// Sort domains alphabetically
+$domains = array_keys($allDomains);
+sort($domains, SORT_STRING);
+
+$totalDomains = count($domains);
+
+// Statistics
+echo "╔════════════════════════════════════════════════════════════╗\n";
+echo "║                      Statistics                            ║\n";
+echo "╚════════════════════════════════════════════════════════════╝\n";
+echo "\n";
+
+$maxNameLen = max(array_map('strlen', array_keys($stats)));
+foreach ($stats as $name => $stat) {
+    $namePadded = str_pad($name, $maxNameLen);
+    if ($stat['status'] === 'ok') {
+        $countFormatted = number_format($stat['count']);
+        echo "  $namePadded : $countFormatted domains ({$stat['time']}s)\n";
+    } else {
+        echo "  $namePadded : \033[31mFAILED\033[0m - {$stat['error']}\n";
+    }
+}
+
+echo "\n";
+echo "  " . str_repeat('─', $maxNameLen + 30) . "\n";
+echo "  \033[1mTotal unique domains: " . number_format($totalDomains) . "\033[0m\n";
+echo "\n";
+
+if ($dryRun) {
+    warning("Dry run - no file written");
+    echo "\n";
+    exit(0);
+}
+
+// Write file
+info("Writing to: $outputPath");
+
+$header = <<<HEADER
+# Disposable Email Domains
+# Auto-generated by bin/update-domains
+# Last updated: %s
+# Total domains: %s
+#
+# Sources:
+%s
+#
+# This file is part of disposable-email-blocker-core
+# https://github.com/raul3k/disposable-email-blocker-core
+
+HEADER;
+
+$sourcesComment = implode("\n", array_map(
+    fn($name) => "#   - $name",
+    $sourcesToFetch
+));
+
+$content = sprintf(
+    $header,
+    date('Y-m-d H:i:s T'),
+    number_format($totalDomains),
+    $sourcesComment
+);
+
+$content .= implode("\n", $domains) . "\n";
+
+$bytesWritten = file_put_contents($outputPath, $content);
+
+if ($bytesWritten === false) {
+    error("Failed to write file!");
+    exit(1);
+}
+
+$sizeKb = round($bytesWritten / 1024, 1);
+success("Written $sizeKb KB to $outputPath");
+echo "\n";
