@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0](https://github.com/raul3k/disposable-email-blocker-core/compare/v1.0.0...v2.0.0) (2026-02-26)
+
+
+### ⚠ BREAKING CHANGES
+
+* namespace changed from Raul3k\BlockDisposable\Core to Raul3k\DisposableBlocker\Core
+
+### Code Refactoring
+
+* unify namespace to DisposableBlocker and fix pre-release issues ([#9](https://github.com/raul3k/disposable-email-blocker-core/issues/9)) ([b0fcadc](https://github.com/raul3k/disposable-email-blocker-core/commit/b0fcadcf70087146d945a2aa93e94f2e4dc55d16))
+
 ## 1.0.0 (2026-02-26)
 
 
