@@ -18,6 +18,8 @@ namespace Raul3k\BlockDisposable\Core;
  */
 final class DomainInfo
 {
+    private static ?DomainNormalizer $sharedNormalizer = null;
+
     private function __construct(
         private readonly string $originalInput,
         private readonly ?string $fullHost,
@@ -38,9 +40,11 @@ final class DomainInfo
      */
     public static function parse(string $input): self
     {
-        $normalizer = new DomainNormalizer();
+        if (self::$sharedNormalizer === null) {
+            self::$sharedNormalizer = new DomainNormalizer();
+        }
 
-        return self::parseWithNormalizer($input, $normalizer);
+        return self::parseWithNormalizer($input, self::$sharedNormalizer);
     }
 
     /**

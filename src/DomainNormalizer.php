@@ -128,7 +128,11 @@ class DomainNormalizer
 
         $ascii = idn_to_ascii($domain, IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46);
 
-        return $ascii !== false ? $ascii : $domain;
+        if ($ascii === false) {
+            throw InvalidDomainException::forDomain($domain);
+        }
+
+        return $ascii;
     }
 
     private function extractRegistrableDomain(string $domain): ?string

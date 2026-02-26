@@ -217,7 +217,7 @@ class DisposableEmailChecker
     {
         $results = [];
 
-        foreach ($emails as $email) {
+        foreach (array_unique($emails) as $email) {
             $results[$email] = $this->checkSafe($email);
         }
 
@@ -234,7 +234,7 @@ class DisposableEmailChecker
     {
         $results = [];
 
-        foreach ($emails as $email) {
+        foreach (array_unique($emails) as $email) {
             $results[$email] = $this->isDisposableSafe($email);
         }
 

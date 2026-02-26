@@ -30,15 +30,11 @@ class WhitelistChecker implements CheckerInterface
 
     public function isDomainDisposable(string $normalizedDomain): bool
     {
-        $domain = strtolower($normalizedDomain);
-
-        // Check exact match
-        if (isset($this->whitelist[$domain])) {
+        if (isset($this->whitelist[$normalizedDomain])) {
             return false;
         }
 
-        // Check parent domain (e.g., sub.example.com -> example.com)
-        $parts = explode('.', $domain);
+        $parts = explode('.', $normalizedDomain);
         while (count($parts) > 2) {
             array_shift($parts);
             $parentDomain = implode('.', $parts);
