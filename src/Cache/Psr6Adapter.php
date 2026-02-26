@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Raul3k\BlockDisposable\Core\Cache;
 
+use BadMethodCallException;
 use DateInterval;
 use Psr\Cache\CacheItemPoolInterface;
 
@@ -58,9 +59,8 @@ class Psr6Adapter implements CacheInterface
 
     public function clear(): bool
     {
-        // PSR-6 clear() clears all cache, not just our prefixed keys
-        // This might not be desired behavior, so we just return true
-        // without actually clearing
-        return true;
+        throw new BadMethodCallException(
+            'clear() is not supported on PSR-6 adapter because it would flush the entire cache pool.'
+        );
     }
 }
