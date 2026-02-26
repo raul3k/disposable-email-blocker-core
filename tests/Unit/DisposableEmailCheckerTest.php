@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Raul3k\BlockDisposable\Core\Tests\Unit;
 
-use Raul3k\BlockDisposable\Core\CheckResult;
 use Raul3k\BlockDisposable\Core\Checkers\CallbackChecker;
 use Raul3k\BlockDisposable\Core\Checkers\FileChecker;
+use Raul3k\BlockDisposable\Core\CheckResult;
 use Raul3k\BlockDisposable\Core\DisposableEmailChecker;
 use Raul3k\BlockDisposable\Core\DomainNormalizer;
 use Raul3k\BlockDisposable\Core\Exceptions\InvalidDomainException;
