@@ -52,8 +52,8 @@ if (!$autoloaded) {
     exit(1);
 }
 
-use Raul3k\BlockDisposable\Core\Config\Configuration;
-use Raul3k\BlockDisposable\Core\Sources\SourceRegistry;
+use Raul3k\DisposableBlocker\Core\Config\Configuration;
+use Raul3k\DisposableBlocker\Core\Sources\SourceRegistry;
 
 // Parse arguments
 $options = getopt('', ['dry-run', 'source:', 'output:', 'config:', 'no-config', 'verbose', 'help']);
@@ -80,8 +80,8 @@ Configuration File:
   Create "disposable-blocker.php" in your project root:
 
   <?php
-  use Raul3k\BlockDisposable\Core\Sources\UrlSource;
-  use Raul3k\BlockDisposable\Core\Sources\FileSource;
+  use Raul3k\DisposableBlocker\Core\Sources\UrlSource;
+  use Raul3k\DisposableBlocker\Core\Sources\FileSource;
 
   return [
       // Add custom sources
@@ -104,11 +104,11 @@ Configuration File:
   ];
 
 Built-in Sources:
-  - disposable-email-domains  (~5k domains)
-  - burner-email-providers    (~27k domains)
-  - mailchecker               (~56k domains)
-  - ivolo-disposable          (~122k domains)
-  - fakefilter                (~9k domains)
+  - disposable-email-domains
+  - burner-email-providers
+  - mailchecker
+  - ivolo-disposable
+  - fakefilter
 
 Examples:
   ./bin/update-domains

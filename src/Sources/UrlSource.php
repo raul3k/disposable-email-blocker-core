@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Sources;
+namespace Raul3k\DisposableBlocker\Core\Sources;
 
-use Raul3k\BlockDisposable\Core\Parsers\ParserInterface;
-use Raul3k\BlockDisposable\Core\Parsers\TextLineParser;
+use Raul3k\DisposableBlocker\Core\Parsers\ParserInterface;
+use Raul3k\DisposableBlocker\Core\Parsers\TextLineParser;
 use RuntimeException;
 
 class UrlSource implements SourceInterface
@@ -83,7 +83,7 @@ class UrlSource implements SourceInterface
     {
         $headers = array_merge(
             [
-                'User-Agent' => 'BlockDisposable/1.0',
+                'User-Agent' => 'DisposableBlocker/1.0',
                 'Accept' => '*/*',
             ],
             $this->httpHeaders

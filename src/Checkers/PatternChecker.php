@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Checkers;
+namespace Raul3k\DisposableBlocker\Core\Checkers;
 
 use InvalidArgumentException;
 
@@ -103,11 +103,11 @@ class PatternChecker implements CheckerInterface
         return [
             // Temporary/disposable keywords
             '/^temp(?:mail|email|inbox)?[.-]?/i',
-            '/[.-]?temp(?:mail|email|inbox)?$/i',
+            '/[.-]temp(?:mail|email|inbox)?\./i',
             '/^disposable[.-]?/i',
-            '/[.-]?disposable$/i',
+            '/[.-]disposable\./i',
             '/^throwaway[.-]?/i',
-            '/[.-]?throwaway$/i',
+            '/[.-]throwaway\./i',
             '/^trash[.-]?(?:mail|email)?/i',
             '/^junk[.-]?(?:mail|email)?/i',
             '/^fake[.-]?(?:mail|email|inbox)?/i',

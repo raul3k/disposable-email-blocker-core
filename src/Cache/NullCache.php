@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Cache;
+namespace Raul3k\DisposableBlocker\Core\Cache;
 
 /**
  * Null cache implementation that doesn't cache anything.

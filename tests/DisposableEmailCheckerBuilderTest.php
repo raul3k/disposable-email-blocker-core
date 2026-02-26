@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Tests;
+namespace Raul3k\DisposableBlocker\Core\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Raul3k\BlockDisposable\Core\Cache\ArrayCache;
-use Raul3k\BlockDisposable\Core\Checkers\CachedChecker;
-use Raul3k\BlockDisposable\Core\Checkers\ChainChecker;
-use Raul3k\BlockDisposable\Core\Checkers\WhitelistChecker;
-use Raul3k\BlockDisposable\Core\DisposableEmailChecker;
-use Raul3k\BlockDisposable\Core\DisposableEmailCheckerBuilder;
+use Raul3k\DisposableBlocker\Core\Cache\ArrayCache;
+use Raul3k\DisposableBlocker\Core\Checkers\CachedChecker;
+use Raul3k\DisposableBlocker\Core\Checkers\ChainChecker;
+use Raul3k\DisposableBlocker\Core\Checkers\WhitelistChecker;
+use Raul3k\DisposableBlocker\Core\DisposableEmailChecker;
+use Raul3k\DisposableBlocker\Core\DisposableEmailCheckerBuilder;
 
 class DisposableEmailCheckerBuilderTest extends TestCase
 {

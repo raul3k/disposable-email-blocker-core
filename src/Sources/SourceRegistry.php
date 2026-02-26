@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Sources;
+namespace Raul3k\DisposableBlocker\Core\Sources;
 
 use InvalidArgumentException;
-use Raul3k\BlockDisposable\Core\Parsers\JsonArrayParser;
-use Raul3k\BlockDisposable\Core\Parsers\TextLineParser;
+use Raul3k\DisposableBlocker\Core\Parsers\JsonArrayParser;
+use Raul3k\DisposableBlocker\Core\Parsers\TextLineParser;
 
 class SourceRegistry
 {
@@ -82,7 +82,6 @@ class SourceRegistry
 
     private function registerBuiltInSources(): void
     {
-        // disposable-email-domains - Large comprehensive list (~170k domains)
         // https://github.com/disposable-email-domains/disposable-email-domains
         $this->register(new UrlSource(
             url: 'https://raw.githubusercontent.com/disposable-email-domains/disposable-email-domains/master/disposable_email_blocklist.conf',
@@ -90,7 +89,6 @@ class SourceRegistry
             parser: new TextLineParser()
         ));
 
-        // burner-email-providers - Curated list (~4k domains)
         // https://github.com/wesbos/burner-email-providers
         $this->register(new UrlSource(
             url: 'https://raw.githubusercontent.com/wesbos/burner-email-providers/master/emails.txt',
@@ -98,7 +96,6 @@ class SourceRegistry
             parser: new TextLineParser()
         ));
 
-        // FGRibreau's mailchecker - Text format
         // https://github.com/FGRibreau/mailchecker
         $this->register(new UrlSource(
             url: 'https://raw.githubusercontent.com/FGRibreau/mailchecker/master/list.txt',
@@ -106,7 +103,6 @@ class SourceRegistry
             parser: new TextLineParser()
         ));
 
-        // Ivolo disposable email domains
         // https://github.com/ivolo/disposable-email-domains
         $this->register(new UrlSource(
             url: 'https://raw.githubusercontent.com/ivolo/disposable-email-domains/master/index.json',
@@ -114,7 +110,6 @@ class SourceRegistry
             parser: new JsonArrayParser()
         ));
 
-        // 7c/fakefilter - Another comprehensive list
         // https://github.com/7c/fakefilter
         $this->register(new UrlSource(
             url: 'https://raw.githubusercontent.com/7c/fakefilter/main/txt/data.txt',

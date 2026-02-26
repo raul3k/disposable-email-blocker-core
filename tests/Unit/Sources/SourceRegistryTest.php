@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Tests\Unit\Sources;
+namespace Raul3k\DisposableBlocker\Core\Tests\Unit\Sources;
 
 use InvalidArgumentException;
-use Raul3k\BlockDisposable\Core\Sources\SourceInterface;
-use Raul3k\BlockDisposable\Core\Sources\SourceRegistry;
-use Raul3k\BlockDisposable\Core\Sources\UrlSource;
-use Raul3k\BlockDisposable\Core\Tests\TestCase;
+use Raul3k\DisposableBlocker\Core\Sources\SourceInterface;
+use Raul3k\DisposableBlocker\Core\Sources\SourceRegistry;
+use Raul3k\DisposableBlocker\Core\Sources\UrlSource;
+use Raul3k\DisposableBlocker\Core\Tests\TestCase;
 
 class SourceRegistryTest extends TestCase
 {

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Exceptions;
+namespace Raul3k\DisposableBlocker\Core\Exceptions;
 
 use InvalidArgumentException;
 

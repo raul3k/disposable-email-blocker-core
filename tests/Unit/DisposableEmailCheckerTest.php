@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Tests\Unit;
+namespace Raul3k\DisposableBlocker\Core\Tests\Unit;
 
-use Raul3k\BlockDisposable\Core\Checkers\CallbackChecker;
-use Raul3k\BlockDisposable\Core\Checkers\FileChecker;
-use Raul3k\BlockDisposable\Core\CheckResult;
-use Raul3k\BlockDisposable\Core\DisposableEmailChecker;
-use Raul3k\BlockDisposable\Core\DomainNormalizer;
-use Raul3k\BlockDisposable\Core\Exceptions\InvalidDomainException;
-use Raul3k\BlockDisposable\Core\Tests\TestCase;
+use Raul3k\DisposableBlocker\Core\Checkers\CallbackChecker;
+use Raul3k\DisposableBlocker\Core\Checkers\FileChecker;
+use Raul3k\DisposableBlocker\Core\CheckResult;
+use Raul3k\DisposableBlocker\Core\DisposableEmailChecker;
+use Raul3k\DisposableBlocker\Core\DomainNormalizer;
+use Raul3k\DisposableBlocker\Core\Exceptions\InvalidDomainException;
+use Raul3k\DisposableBlocker\Core\Tests\TestCase;
 
 class DisposableEmailCheckerTest extends TestCase
 {
@@ -305,7 +305,7 @@ class DisposableEmailCheckerTest extends TestCase
         $checker = DisposableEmailChecker::builder()
             ->withDomainsFile($this->tempFile)
             ->withWhitelist(['example.com'])
-            ->withCache(new \Raul3k\BlockDisposable\Core\Cache\ArrayCache())
+            ->withCache(new \Raul3k\DisposableBlocker\Core\Cache\ArrayCache())
             ->build();
 
         $result = $checker->check('user@example.com');
@@ -322,7 +322,7 @@ class DisposableEmailCheckerTest extends TestCase
         $checker = DisposableEmailChecker::builder()
             ->withDomainsFile($this->tempFile)
             ->withWhitelist(['example.com'])
-            ->withCache(new \Raul3k\BlockDisposable\Core\Cache\ArrayCache())
+            ->withCache(new \Raul3k\DisposableBlocker\Core\Cache\ArrayCache())
             ->build();
 
         $result = $checker->checkDomain('example.com');

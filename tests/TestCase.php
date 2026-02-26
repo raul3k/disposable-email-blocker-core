@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Tests;
+namespace Raul3k\DisposableBlocker\Core\Tests;
 
 use PHPUnit\Framework\TestCase as BaseTestCase;
 

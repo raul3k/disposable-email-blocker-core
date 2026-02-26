@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Config;
+namespace Raul3k\DisposableBlocker\Core\Config;
 
-use Raul3k\BlockDisposable\Core\Sources\SourceInterface;
-use Raul3k\BlockDisposable\Core\Sources\SourceRegistry;
+use Raul3k\DisposableBlocker\Core\Sources\SourceInterface;
+use Raul3k\DisposableBlocker\Core\Sources\SourceRegistry;
 
 /**
  * Configuration loader for custom sources.
