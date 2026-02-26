@@ -6,6 +6,7 @@ namespace Raul3k\BlockDisposable\Core\Tests\Unit;
 
 use Raul3k\BlockDisposable\Core\Checkers\CallbackChecker;
 use Raul3k\BlockDisposable\Core\Checkers\FileChecker;
+use Raul3k\BlockDisposable\Core\CheckResult;
 use Raul3k\BlockDisposable\Core\DisposableEmailChecker;
 use Raul3k\BlockDisposable\Core\DomainNormalizer;
 use Raul3k\BlockDisposable\Core\Exceptions\InvalidDomainException;
@@ -166,5 +167,167 @@ class DisposableEmailCheckerTest extends TestCase
         $this->assertFalse($checker->isDisposable('user@yahoo.com'));
         $this->assertFalse($checker->isDisposable('user@hotmail.com'));
         $this->assertFalse($checker->isDisposable('user@outlook.com'));
+    }
+
+    public function testCheckReturnsCheckResultForDisposableEmail(): void
+    {
+        $this->tempFile = $this->createTempFile('mailinator.com');
+        $checker = DisposableEmailChecker::create(new FileChecker($this->tempFile));
+
+        $result = $checker->check('user@mailinator.com');
+
+        $this->assertInstanceOf(CheckResult::class, $result);
+        $this->assertTrue($result->isDisposable());
+        $this->assertFalse($result->isSafe());
+        $this->assertFalse($result->isWhitelisted());
+        $this->assertSame('mailinator.com', $result->getDomain());
+        $this->assertSame('user@mailinator.com', $result->getOriginalInput());
+        $this->assertNotNull($result->getMatchedChecker());
+    }
+
+    public function testCheckReturnsCheckResultForSafeEmail(): void
+    {
+        $this->tempFile = $this->createTempFile('mailinator.com');
+        $checker = DisposableEmailChecker::create(new FileChecker($this->tempFile));
+
+        $result = $checker->check('user@gmail.com');
+
+        $this->assertInstanceOf(CheckResult::class, $result);
+        $this->assertFalse($result->isDisposable());
+        $this->assertTrue($result->isSafe());
+        $this->assertFalse($result->isWhitelisted());
+        $this->assertSame('gmail.com', $result->getDomain());
+    }
+
+    public function testCheckThrowsForInvalidEmail(): void
+    {
+        $checker = DisposableEmailChecker::create();
+
+        $this->expectException(InvalidDomainException::class);
+
+        $checker->check('notanemail');
+    }
+
+    public function testCheckSafeReturnsSafeResultForInvalidEmail(): void
+    {
+        $checker = DisposableEmailChecker::create();
+
+        $result = $checker->checkSafe('notanemail');
+
+        $this->assertInstanceOf(CheckResult::class, $result);
+        $this->assertTrue($result->isSafe());
+        $this->assertFalse($result->isDisposable());
+        $this->assertSame('', $result->getDomain());
+        $this->assertSame('notanemail', $result->getOriginalInput());
+    }
+
+    public function testCheckSafeReturnsCorrectResultForValidEmail(): void
+    {
+        $this->tempFile = $this->createTempFile('mailinator.com');
+        $checker = DisposableEmailChecker::create(new FileChecker($this->tempFile));
+
+        $disposable = $checker->checkSafe('user@mailinator.com');
+        $this->assertTrue($disposable->isDisposable());
+
+        $safe = $checker->checkSafe('user@gmail.com');
+        $this->assertTrue($safe->isSafe());
+    }
+
+    public function testCheckDomainReturnsCheckResult(): void
+    {
+        $this->tempFile = $this->createTempFile('mailinator.com');
+        $checker = DisposableEmailChecker::create(new FileChecker($this->tempFile));
+
+        $disposable = $checker->checkDomain('mailinator.com');
+        $this->assertTrue($disposable->isDisposable());
+        $this->assertSame('mailinator.com', $disposable->getDomain());
+
+        $safe = $checker->checkDomain('gmail.com');
+        $this->assertTrue($safe->isSafe());
+    }
+
+    public function testCheckDomainThrowsForInvalidDomain(): void
+    {
+        $checker = DisposableEmailChecker::create();
+
+        $this->expectException(InvalidDomainException::class);
+
+        $checker->checkDomain('');
+    }
+
+    public function testCheckBatchReturnsResultsKeyedByEmail(): void
+    {
+        $this->tempFile = $this->createTempFile('mailinator.com');
+        $checker = DisposableEmailChecker::create(new FileChecker($this->tempFile));
+
+        $emails = [
+            'user@mailinator.com',
+            'user@gmail.com',
+            'notanemail',
+        ];
+
+        $results = $checker->checkBatch($emails);
+
+        $this->assertCount(3, $results);
+        $this->assertArrayHasKey('user@mailinator.com', $results);
+        $this->assertArrayHasKey('user@gmail.com', $results);
+        $this->assertArrayHasKey('notanemail', $results);
+
+        $this->assertInstanceOf(CheckResult::class, $results['user@mailinator.com']);
+        $this->assertTrue($results['user@mailinator.com']->isDisposable());
+        $this->assertTrue($results['user@gmail.com']->isSafe());
+        $this->assertTrue($results['notanemail']->isSafe());
+    }
+
+    public function testIsDisposableBatchReturnsBooleansKeyedByEmail(): void
+    {
+        $this->tempFile = $this->createTempFile('mailinator.com');
+        $checker = DisposableEmailChecker::create(new FileChecker($this->tempFile));
+
+        $emails = [
+            'user@mailinator.com',
+            'user@gmail.com',
+            'notanemail',
+        ];
+
+        $results = $checker->isDisposableBatch($emails);
+
+        $this->assertCount(3, $results);
+        $this->assertTrue($results['user@mailinator.com']);
+        $this->assertFalse($results['user@gmail.com']);
+        $this->assertFalse($results['notanemail']);
+    }
+
+    public function testCheckReturnsWhitelistedResultWithCacheAndWhitelist(): void
+    {
+        $this->tempFile = $this->createTempFile("mailinator.com\nexample.com");
+
+        $checker = DisposableEmailChecker::builder()
+            ->withDomainsFile($this->tempFile)
+            ->withWhitelist(['example.com'])
+            ->withCache(new \Raul3k\BlockDisposable\Core\Cache\ArrayCache())
+            ->build();
+
+        $result = $checker->check('user@example.com');
+
+        $this->assertTrue($result->isWhitelisted());
+        $this->assertFalse($result->isDisposable());
+        $this->assertTrue($result->isSafe());
+    }
+
+    public function testCheckDomainReturnsWhitelistedResultWithCacheAndWhitelist(): void
+    {
+        $this->tempFile = $this->createTempFile("mailinator.com\nexample.com");
+
+        $checker = DisposableEmailChecker::builder()
+            ->withDomainsFile($this->tempFile)
+            ->withWhitelist(['example.com'])
+            ->withCache(new \Raul3k\BlockDisposable\Core\Cache\ArrayCache())
+            ->build();
+
+        $result = $checker->checkDomain('example.com');
+
+        $this->assertTrue($result->isWhitelisted());
+        $this->assertFalse($result->isDisposable());
     }
 }

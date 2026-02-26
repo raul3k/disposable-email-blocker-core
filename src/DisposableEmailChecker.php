@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Raul3k\BlockDisposable\Core;
 
+use Raul3k\BlockDisposable\Core\Checkers\CachedChecker;
 use Raul3k\BlockDisposable\Core\Checkers\ChainChecker;
 use Raul3k\BlockDisposable\Core\Checkers\CheckerInterface;
 use Raul3k\BlockDisposable\Core\Checkers\FileChecker;
@@ -152,8 +153,8 @@ class DisposableEmailChecker
     {
         $domain = $this->normalizer->normalizeFromEmail($email);
 
-        // Check for whitelist first
-        if ($this->checker instanceof WhitelistChecker && $this->checker->isWhitelisted($domain)) {
+        $whitelistChecker = $this->findWhitelistChecker();
+        if ($whitelistChecker !== null && $whitelistChecker->isWhitelisted($domain)) {
             return CheckResult::whitelisted($domain, $email);
         }
 
@@ -163,7 +164,6 @@ class DisposableEmailChecker
             return CheckResult::safe($domain, $email);
         }
 
-        // Try to get the matched checker name
         $matchedChecker = $this->getMatchedCheckerName();
 
         return CheckResult::disposable($domain, $email, $matchedChecker);
@@ -191,8 +191,8 @@ class DisposableEmailChecker
     {
         $normalizedDomain = $this->normalizer->normalizeDomain($domain);
 
-        // Check for whitelist first
-        if ($this->checker instanceof WhitelistChecker && $this->checker->isWhitelisted($normalizedDomain)) {
+        $whitelistChecker = $this->findWhitelistChecker();
+        if ($whitelistChecker !== null && $whitelistChecker->isWhitelisted($normalizedDomain)) {
             return CheckResult::whitelisted($normalizedDomain, $domain);
         }
 
@@ -239,6 +239,29 @@ class DisposableEmailChecker
         }
 
         return $results;
+    }
+
+    /**
+     * Find a WhitelistChecker in the decorator chain.
+     */
+    private function findWhitelistChecker(): ?WhitelistChecker
+    {
+        $checker = $this->checker;
+
+        while ($checker !== null) {
+            if ($checker instanceof WhitelistChecker) {
+                return $checker;
+            }
+
+            if ($checker instanceof CachedChecker) {
+                $checker = $checker->getWrappedChecker();
+                continue;
+            }
+
+            break;
+        }
+
+        return null;
     }
 
     /**

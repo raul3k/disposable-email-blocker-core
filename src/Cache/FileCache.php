@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Raul3k\BlockDisposable\Core\Cache;
 
+use JsonException;
 use RuntimeException;
 
 /**
  * File-based cache implementation.
  *
- * Stores cached values as serialized PHP in files.
+ * Stores cached values as JSON in files.
  * Suitable for simple caching needs without external dependencies.
  */
 class FileCache implements CacheInterface
@@ -52,7 +53,12 @@ class FileCache implements CacheInterface
             return null;
         }
 
-        $data = unserialize($content);
+        try {
+            $data = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException) {
+            return null;
+        }
+
         if (!is_array($data) || !isset($data['value'])) {
             return null;
         }
@@ -76,7 +82,12 @@ class FileCache implements CacheInterface
             'created' => time(),
         ];
 
-        $content = serialize($data);
+        try {
+            $content = json_encode($data, JSON_THROW_ON_ERROR);
+        } catch (JsonException) {
+            return false;
+        }
+
         $written = file_put_contents($path, $content, LOCK_EX);
 
         return $written !== false;
@@ -142,7 +153,12 @@ class FileCache implements CacheInterface
                 continue;
             }
 
-            $data = unserialize($content);
+            try {
+                $data = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+            } catch (JsonException) {
+                continue;
+            }
+
             if (is_array($data) && isset($data['expires']) && $data['expires'] < time()) {
                 if (unlink($file)) {
                     $removed++;
