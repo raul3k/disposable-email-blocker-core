@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Tests\Checkers;
+namespace Raul3k\DisposableBlocker\Core\Tests\Checkers;
 
 use PHPUnit\Framework\TestCase;
-use Raul3k\BlockDisposable\Core\Checkers\CallbackChecker;
-use Raul3k\BlockDisposable\Core\Checkers\WhitelistChecker;
+use Raul3k\DisposableBlocker\Core\Checkers\CallbackChecker;
+use Raul3k\DisposableBlocker\Core\Checkers\WhitelistChecker;
 
 class WhitelistCheckerTest extends TestCase
 {

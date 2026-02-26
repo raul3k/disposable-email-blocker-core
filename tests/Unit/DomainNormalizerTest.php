@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Tests\Unit;
+namespace Raul3k\DisposableBlocker\Core\Tests\Unit;
 
-use Raul3k\BlockDisposable\Core\DomainNormalizer;
-use Raul3k\BlockDisposable\Core\Exceptions\InvalidDomainException;
-use Raul3k\BlockDisposable\Core\Tests\TestCase;
+use Raul3k\DisposableBlocker\Core\DomainNormalizer;
+use Raul3k\DisposableBlocker\Core\Exceptions\InvalidDomainException;
+use Raul3k\DisposableBlocker\Core\Tests\TestCase;
 
 class DomainNormalizerTest extends TestCase
 {

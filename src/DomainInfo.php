@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core;
+namespace Raul3k\DisposableBlocker\Core;
 
 /**
  * Parsed domain information.
@@ -37,6 +37,10 @@ final class DomainInfo
 
     /**
      * Parse a domain or email address.
+     *
+     * Uses a shared DomainNormalizer instance. For hot loops or batch processing,
+     * prefer {@see parseWithNormalizer()} with a pre-built normalizer to avoid
+     * the overhead of lazy-initialization checks on every call.
      */
     public static function parse(string $input): self
     {

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Checkers;
+namespace Raul3k\DisposableBlocker\Core\Checkers;
 
-use Raul3k\BlockDisposable\Core\Cache\CacheInterface;
+use Raul3k\DisposableBlocker\Core\Cache\CacheInterface;
 
 /**
  * Decorator that adds caching to any checker.

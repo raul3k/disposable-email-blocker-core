@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Tests\Unit\Sources;
+namespace Raul3k\DisposableBlocker\Core\Tests\Unit\Sources;
 
-use Raul3k\BlockDisposable\Core\Parsers\JsonArrayParser;
-use Raul3k\BlockDisposable\Core\Parsers\TextLineParser;
-use Raul3k\BlockDisposable\Core\Sources\UrlSource;
-use Raul3k\BlockDisposable\Core\Tests\TestCase;
+use Raul3k\DisposableBlocker\Core\Parsers\JsonArrayParser;
+use Raul3k\DisposableBlocker\Core\Parsers\TextLineParser;
+use Raul3k\DisposableBlocker\Core\Sources\UrlSource;
+use Raul3k\DisposableBlocker\Core\Tests\TestCase;
 
 class UrlSourceTest extends TestCase
 {

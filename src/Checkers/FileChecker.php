@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Checkers;
+namespace Raul3k\DisposableBlocker\Core\Checkers;
 
+use Countable;
 use RuntimeException;
 
-class FileChecker implements CheckerInterface
+class FileChecker implements CheckerInterface, Countable
 {
     private ?array $domains = null;
 

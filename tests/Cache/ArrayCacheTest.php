@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Tests\Cache;
+namespace Raul3k\DisposableBlocker\Core\Tests\Cache;
 
 use PHPUnit\Framework\TestCase;
-use Raul3k\BlockDisposable\Core\Cache\ArrayCache;
+use Raul3k\DisposableBlocker\Core\Cache\ArrayCache;
 
 class ArrayCacheTest extends TestCase
 {

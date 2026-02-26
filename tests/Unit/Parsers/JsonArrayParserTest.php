@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Tests\Unit\Parsers;
+namespace Raul3k\DisposableBlocker\Core\Tests\Unit\Parsers;
 
-use Raul3k\BlockDisposable\Core\Parsers\JsonArrayParser;
-use Raul3k\BlockDisposable\Core\Tests\TestCase;
+use Raul3k\DisposableBlocker\Core\Parsers\JsonArrayParser;
+use Raul3k\DisposableBlocker\Core\Tests\TestCase;
 use RuntimeException;
 
 class JsonArrayParserTest extends TestCase

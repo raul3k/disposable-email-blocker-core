@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Parsers;
+namespace Raul3k\DisposableBlocker\Core\Parsers;
 
 /**
  * Parser for plain text files with one domain per line.

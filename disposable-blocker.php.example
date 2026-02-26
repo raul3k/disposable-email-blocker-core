@@ -12,10 +12,10 @@ declare(strict_types=1);
  *   vendor/bin/update-domains
  */
 
-use Raul3k\BlockDisposable\Core\Parsers\JsonArrayParser;
-use Raul3k\BlockDisposable\Core\Parsers\TextLineParser;
-use Raul3k\BlockDisposable\Core\Sources\FileSource;
-use Raul3k\BlockDisposable\Core\Sources\UrlSource;
+use Raul3k\DisposableBlocker\Core\Parsers\JsonArrayParser;
+use Raul3k\DisposableBlocker\Core\Parsers\TextLineParser;
+use Raul3k\DisposableBlocker\Core\Sources\FileSource;
+use Raul3k\DisposableBlocker\Core\Sources\UrlSource;
 
 return [
     /**

@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Tests\Unit\Checkers;
+namespace Raul3k\DisposableBlocker\Core\Tests\Unit\Checkers;
 
 use InvalidArgumentException;
-use Raul3k\BlockDisposable\Core\Checkers\CallbackChecker;
-use Raul3k\BlockDisposable\Core\Checkers\ChainChecker;
-use Raul3k\BlockDisposable\Core\Tests\TestCase;
+use Raul3k\DisposableBlocker\Core\Checkers\CallbackChecker;
+use Raul3k\DisposableBlocker\Core\Checkers\ChainChecker;
+use Raul3k\DisposableBlocker\Core\Tests\TestCase;
 
 class ChainCheckerTest extends TestCase
 {

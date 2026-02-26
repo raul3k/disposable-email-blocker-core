@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Cache;
+namespace Raul3k\DisposableBlocker\Core\Cache;
 
 use BadMethodCallException;
 use Psr\SimpleCache\CacheInterface as PsrCacheInterface;

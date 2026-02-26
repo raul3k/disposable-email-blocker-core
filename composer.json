@@ -9,6 +9,11 @@
             "homepage": "https://github.com/raul3k"
         }
     ],
+    "homepage": "https://github.com/raul3k/disposable-email-blocker-core",
+    "support": {
+        "issues": "https://github.com/raul3k/disposable-email-blocker-core/issues",
+        "source": "https://github.com/raul3k/disposable-email-blocker-core"
+    },
     "keywords": [
         "disposable",
         "email",
@@ -38,12 +43,12 @@
     ],
     "autoload": {
         "psr-4": {
-            "Raul3k\\BlockDisposable\\Core\\": "src/"
+            "Raul3k\\DisposableBlocker\\Core\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Raul3k\\BlockDisposable\\Core\\Tests\\": "tests/"
+            "Raul3k\\DisposableBlocker\\Core\\Tests\\": "tests/"
         }
     },
     "scripts": {

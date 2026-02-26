@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core;
+namespace Raul3k\DisposableBlocker\Core;
 
-use Raul3k\BlockDisposable\Core\Checkers\CachedChecker;
-use Raul3k\BlockDisposable\Core\Checkers\ChainChecker;
-use Raul3k\BlockDisposable\Core\Checkers\CheckerInterface;
-use Raul3k\BlockDisposable\Core\Checkers\FileChecker;
-use Raul3k\BlockDisposable\Core\Checkers\WhitelistChecker;
-use Raul3k\BlockDisposable\Core\Exceptions\InvalidDomainException;
+use Raul3k\DisposableBlocker\Core\Checkers\CachedChecker;
+use Raul3k\DisposableBlocker\Core\Checkers\ChainChecker;
+use Raul3k\DisposableBlocker\Core\Checkers\CheckerInterface;
+use Raul3k\DisposableBlocker\Core\Checkers\FileChecker;
+use Raul3k\DisposableBlocker\Core\Checkers\WhitelistChecker;
+use Raul3k\DisposableBlocker\Core\Exceptions\InvalidDomainException;
 
 class DisposableEmailChecker
 {

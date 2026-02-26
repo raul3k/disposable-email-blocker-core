@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Cache;
+namespace Raul3k\DisposableBlocker\Core\Cache;
 
 /**
  * Simple cache interface for disposable email checking.
