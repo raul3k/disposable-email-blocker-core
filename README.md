@@ -2,6 +2,25 @@
 
 Fast disposable/temporary email detection with full Public Suffix List (PSL) support, pattern matching, caching, and whitelist capabilities.
 
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Builder](#builder)
+- [Detailed Check Results](#detailed-check-results)
+- [Batch Operations](#batch-operations)
+- [Pattern-Based Detection](#pattern-based-detection)
+- [Whitelist Support](#whitelist-support)
+- [Caching](#caching)
+- [Custom Checkers](#custom-checkers)
+- [Working with Sources](#working-with-sources)
+- [Domain Info](#domain-info)
+- [Domain Normalization](#domain-normalization)
+- [Framework Integration](#framework-integration)
+- [Development](#development)
+- [License](#license)
+
 ## Features
 
 - **Fast O(1) lookups** using hash-based domain checking
@@ -126,36 +145,6 @@ $results = $checker->checkBatch($emails);
 // ['user1@gmail.com' => CheckResult, 'user2@mailinator.com' => CheckResult, ...]
 ```
 
-## Domain Info
-
-Parse and inspect domain details using the Public Suffix List:
-
-```php
-use Raul3k\DisposableBlocker\Core\DomainInfo;
-
-$info = DomainInfo::parse('user@mail.example.co.uk');
-
-$info->domain();           // 'example.co.uk'
-$info->subdomain();        // 'mail'
-$info->publicSuffix();     // 'co.uk'
-$info->secondLevelDomain(); // 'example'
-$info->host();             // 'mail.example.co.uk'
-$info->isIcann();          // true
-$info->isPrivate();        // false
-$info->isKnownSuffix();    // true
-$info->isValid();          // true
-
-// IDN support
-$info = DomainInfo::parse('пример.рф');
-$info->ascii();   // 'xn--e1afmkfd.xn--p1ai'
-$info->unicode(); // 'пример.рф'
-$info->isIdn();   // true
-
-// Works with emails, domains, and URLs
-DomainInfo::parse('user@github.io')->isPrivate();    // true
-DomainInfo::parse('https://example.com/path')->domain(); // 'example.com'
-```
-
 ## Pattern-Based Detection
 
 Detect suspicious domain patterns using regex:
@@ -253,17 +242,78 @@ $cachedChecker = new CachedChecker($innerChecker, $cache);
 use Raul3k\DisposableBlocker\Core\DisposableEmailChecker;
 use Raul3k\DisposableBlocker\Core\Checkers\CallbackChecker;
 
-// Redis example
+// Redis
 $checker = DisposableEmailChecker::create(
-    new CallbackChecker(fn($domain) => $redis->sismember('disposable_domains', $domain))
+    new CallbackChecker(fn(string $domain) => $redis->sismember('disposable_domains', $domain))
 );
 
-// Database example
+// PDO
+$stmt = $pdo->prepare('SELECT 1 FROM disposable_domains WHERE domain = ? LIMIT 1');
 $checker = DisposableEmailChecker::create(
-    new CallbackChecker(fn($domain) => DB::table('disposable_domains')
-        ->where('domain', $domain)
-        ->exists())
+    new CallbackChecker(function (string $domain) use ($stmt): bool {
+        $stmt->execute([$domain]);
+        return (bool) $stmt->fetchColumn();
+    })
 );
+
+// Eloquent (Laravel)
+$checker = DisposableEmailChecker::create(
+    new CallbackChecker(fn(string $domain) => \App\Models\DisposableDomain::where('domain', $domain)->exists())
+);
+```
+
+### Implementing CheckerInterface
+
+For reusable or complex checkers, implement the interface directly:
+
+```php
+use Raul3k\DisposableBlocker\Core\Checkers\CheckerInterface;
+
+class PdoDatabaseChecker implements CheckerInterface
+{
+    private \PDOStatement $stmt;
+
+    public function __construct(\PDO $pdo, string $table = 'disposable_domains')
+    {
+        $this->stmt = $pdo->prepare(
+            sprintf('SELECT 1 FROM %s WHERE domain = ? LIMIT 1', $table)
+        );
+    }
+
+    public function isDomainDisposable(string $normalizedDomain): bool
+    {
+        $this->stmt->execute([$normalizedDomain]);
+        return (bool) $this->stmt->fetchColumn();
+    }
+}
+
+// Usage
+$checker = DisposableEmailChecker::create(new PdoDatabaseChecker($pdo));
+```
+
+```php
+use Illuminate\Database\Eloquent\Model;
+use Raul3k\DisposableBlocker\Core\Checkers\CheckerInterface;
+
+class EloquentDatabaseChecker implements CheckerInterface
+{
+    /** @var class-string<Model> */
+    private string $model;
+
+    /** @param class-string<Model> $model */
+    public function __construct(string $model = \App\Models\DisposableDomain::class)
+    {
+        $this->model = $model;
+    }
+
+    public function isDomainDisposable(string $normalizedDomain): bool
+    {
+        return $this->model::where('domain', $normalizedDomain)->exists();
+    }
+}
+
+// Usage
+$checker = DisposableEmailChecker::create(new EloquentDatabaseChecker());
 ```
 
 ### Using a Custom File
@@ -404,6 +454,36 @@ return [
     'exclude_sources' => ['fakefilter'],
     'output_path' => __DIR__ . '/storage/disposable_domains.txt',
 ];
+```
+
+## Domain Info
+
+Parse and inspect domain details using the Public Suffix List:
+
+```php
+use Raul3k\DisposableBlocker\Core\DomainInfo;
+
+$info = DomainInfo::parse('user@mail.example.co.uk');
+
+$info->domain();           // 'example.co.uk'
+$info->subdomain();        // 'mail'
+$info->publicSuffix();     // 'co.uk'
+$info->secondLevelDomain(); // 'example'
+$info->host();             // 'mail.example.co.uk'
+$info->isIcann();          // true
+$info->isPrivate();        // false
+$info->isKnownSuffix();    // true
+$info->isValid();          // true
+
+// IDN support
+$info = DomainInfo::parse('пример.рф');
+$info->ascii();   // 'xn--e1afmkfd.xn--p1ai'
+$info->unicode(); // 'пример.рф'
+$info->isIdn();   // true
+
+// Works with emails, domains, and URLs
+DomainInfo::parse('user@github.io')->isPrivate();    // true
+DomainInfo::parse('https://example.com/path')->domain(); // 'example.com'
 ```
 
 ## Domain Normalization
