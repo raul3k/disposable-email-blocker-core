@@ -4,8 +4,6 @@ parameters:
         - src
     excludePaths:
         - src/Resources
-        - src/Cache/Psr6Adapter.php
-        - src/Cache/Psr16Adapter.php
     treatPhpDocTypesAsCertain: false
     reportUnmatchedIgnoredErrors: false
     ignoreErrors:

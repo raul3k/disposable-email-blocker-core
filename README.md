@@ -10,10 +10,12 @@ Fast disposable/temporary email detection with full Public Suffix List (PSL) sup
 - **Pattern matching** - detect suspicious domain patterns via regex
 - **Whitelist support** - allow specific domains to bypass checks
 - **Caching layer** - PSR-6/PSR-16 compatible cache adapters
-- **Detailed results** - `CheckResult` with confidence and matched checker info
+- **Detailed results** - `CheckResult` with matched checker info
 - **Batch operations** - efficiently check multiple emails at once
 - **Multiple checkers** - file-based, callback-based, or chain multiple checkers
+- **Domain parsing** - `DomainInfo` for detailed domain analysis (PSL, subdomain, IDN)
 - **Extensible sources** - built-in sources + custom parsers for any format
+- **CLI tool** - `bin/update-domains` to fetch and merge domain lists
 - **Framework agnostic** - use with any PHP project
 
 ## Installation
@@ -40,6 +42,36 @@ $checker->isDisposableSafe('invalid-email');   // false
 $checker->isDomainDisposable('tempmail.com');  // true
 ```
 
+## Builder
+
+The fluent builder is the recommended way to compose checkers:
+
+```php
+use Raul3k\DisposableBlocker\Core\DisposableEmailChecker;
+
+$checker = DisposableEmailChecker::builder()
+    ->withBundledDomains()
+    ->withPatternDetection()
+    ->withWhitelist(['mycompany.com', 'partner.org'])
+    ->withFileCache('/tmp/disposable-cache')
+    ->build();
+
+$checker->isDisposable('test@mailinator.com'); // true
+$checker->isDisposable('test@mycompany.com');  // false (whitelisted)
+```
+
+Available builder methods:
+
+- `withBundledDomains()` - use the bundled ~159k domain list
+- `withDomainsFile(string $path)` - use a custom domains file
+- `withPatternDetection(?array $patterns = null)` - enable regex pattern matching
+- `withChecker(CheckerInterface $checker)` - add any custom checker
+- `withCallback(callable $callback)` - add a callback-based checker
+- `withWhitelist(array $domains)` - whitelist specific domains
+- `withFileCache(string $directory, ?int $ttl = 3600)` - enable file-based caching
+- `withCache(CacheInterface $cache, ?int $ttl = 3600)` - use a custom cache
+- `withNormalizer(DomainNormalizer $normalizer)` - use a custom normalizer
+
 ## Detailed Check Results
 
 Get detailed information about the check result:
@@ -49,7 +81,7 @@ use Raul3k\DisposableBlocker\Core\DisposableEmailChecker;
 
 $checker = DisposableEmailChecker::create();
 
-// Get detailed result
+// Check an email
 $result = $checker->check('test@mailinator.com');
 
 $result->isDisposable();      // true
@@ -57,10 +89,17 @@ $result->isSafe();            // false
 $result->getDomain();         // 'mailinator.com'
 $result->getOriginalInput();  // 'test@mailinator.com'
 $result->getMatchedChecker(); // 'Raul3k\DisposableBlocker\Core\Checkers\FileChecker'
-$result->getConfidence();     // 1.0 (high confidence)
 $result->isWhitelisted();     // false
 $result->toArray();           // array representation
 $result->toJson();            // JSON string
+
+// Check a domain directly
+$result = $checker->checkDomain('mailinator.com');
+$result->isDisposable(); // true
+
+// Safe versions (return safe result for invalid input instead of throwing)
+$result = $checker->checkSafe('invalid-email');
+$result->isSafe(); // true
 ```
 
 ## Batch Operations
@@ -85,6 +124,36 @@ $results = $checker->isDisposableBatch($emails);
 // Get detailed results
 $results = $checker->checkBatch($emails);
 // ['user1@gmail.com' => CheckResult, 'user2@mailinator.com' => CheckResult, ...]
+```
+
+## Domain Info
+
+Parse and inspect domain details using the Public Suffix List:
+
+```php
+use Raul3k\DisposableBlocker\Core\DomainInfo;
+
+$info = DomainInfo::parse('user@mail.example.co.uk');
+
+$info->domain();           // 'example.co.uk'
+$info->subdomain();        // 'mail'
+$info->publicSuffix();     // 'co.uk'
+$info->secondLevelDomain(); // 'example'
+$info->host();             // 'mail.example.co.uk'
+$info->isIcann();          // true
+$info->isPrivate();        // false
+$info->isKnownSuffix();    // true
+$info->isValid();          // true
+
+// IDN support
+$info = DomainInfo::parse('пример.рф');
+$info->ascii();   // 'xn--e1afmkfd.xn--p1ai'
+$info->unicode(); // 'пример.рф'
+$info->isIdn();   // true
+
+// Works with emails, domains, and URLs
+DomainInfo::parse('user@github.io')->isPrivate();    // true
+DomainInfo::parse('https://example.com/path')->domain(); // 'example.com'
 ```
 
 ## Pattern-Based Detection
@@ -224,7 +293,7 @@ $checker = DisposableEmailChecker::create(
 
 // After checking, you can see which checker matched
 $result = $checker->check('test@tempmail.com');
-$result->getMatchedChecker(); // e.g., 'PatternChecker'
+$result->getMatchedChecker(); // 'Raul3k\DisposableBlocker\Core\Checkers\PatternChecker'
 ```
 
 ## Working with Sources
@@ -233,13 +302,13 @@ Sources provide lists of disposable domains. The library includes several pre-co
 
 ### Available Built-in Sources
 
-| Source | Description | Size |
-|--------|-------------|------|
-| `disposable-email-domains` | Comprehensive list | ~170k |
-| `burner-email-providers` | Curated list | ~4k |
-| `mailchecker` | JSON format | ~30k |
-| `ivolo-disposable` | JSON format | ~3k |
-| `fakefilter` | Text format | ~100k |
+| Source | Format | Size |
+|--------|--------|------|
+| `disposable-email-domains` | Text | ~5k |
+| `burner-email-providers` | Text | ~27k |
+| `mailchecker` | Text | ~56k |
+| `ivolo-disposable` | JSON | ~122k |
+| `fakefilter` | Text | ~10k |
 
 ### Fetching from Sources
 
@@ -262,19 +331,19 @@ foreach ($source->fetch() as $domain) {
 ### Adding Custom Sources
 
 ```php
-use Raul3k\DisposableBlocker\Core\Sources\{SourceRegistry, UrlSource};
+use Raul3k\DisposableBlocker\Core\Sources\{SourceRegistry, UrlSource, FileSource};
 use Raul3k\DisposableBlocker\Core\Parsers\{TextLineParser, JsonArrayParser};
 
 $registry = new SourceRegistry();
 
-// Text file (one domain per line)
+// Remote text file (one domain per line)
 $registry->register(new UrlSource(
     url: 'https://example.com/domains.txt',
     name: 'my-text-source',
     parser: new TextLineParser()
 ));
 
-// JSON array
+// Remote JSON array
 $registry->register(new UrlSource(
     url: 'https://example.com/domains.json',
     name: 'my-json-source',
@@ -287,6 +356,54 @@ $registry->register(new UrlSource(
     name: 'my-nested-json',
     parser: new JsonArrayParser('response.data.domains')
 ));
+
+// Local file
+$registry->register(new FileSource(
+    path: '/path/to/local-domains.txt',
+    name: 'my-local-source'
+));
+```
+
+### Updating the Bundled Domain List
+
+Use the CLI tool to fetch domains from all sources and update the bundled list:
+
+```bash
+# Update from all sources
+./bin/update-domains
+
+# Preview without writing
+./bin/update-domains --dry-run
+
+# Fetch from specific sources only
+./bin/update-domains --source=disposable-email-domains --source=mailchecker
+
+# Custom output path
+./bin/update-domains --output=storage/domains.txt
+
+# Show detailed progress
+./bin/update-domains --verbose
+
+# See all options
+./bin/update-domains --help
+```
+
+You can customize sources via a `disposable-blocker.php` config file in your project root:
+
+```php
+<?php
+use Raul3k\DisposableBlocker\Core\Sources\UrlSource;
+
+return [
+    'sources' => [
+        new UrlSource(
+            url: 'https://example.com/my-domains.txt',
+            name: 'my-custom-source'
+        ),
+    ],
+    'exclude_sources' => ['fakefilter'],
+    'output_path' => __DIR__ . '/storage/disposable_domains.txt',
+];
 ```
 
 ## Domain Normalization
