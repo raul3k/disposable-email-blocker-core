@@ -248,20 +248,11 @@ class DisposableEmailChecker
     {
         $checker = $this->checker;
 
-        while ($checker !== null) {
-            if ($checker instanceof WhitelistChecker) {
-                return $checker;
-            }
-
-            if ($checker instanceof CachedChecker) {
-                $checker = $checker->getWrappedChecker();
-                continue;
-            }
-
-            break;
+        if ($checker instanceof CachedChecker) {
+            $checker = $checker->getWrappedChecker();
         }
 
-        return null;
+        return $checker instanceof WhitelistChecker ? $checker : null;
     }
 
     /**
@@ -269,10 +260,20 @@ class DisposableEmailChecker
      */
     private function getMatchedCheckerName(): string
     {
-        if ($this->checker instanceof ChainChecker) {
-            return $this->checker->getLastMatchedChecker() ?? $this->checker::class;
+        $checker = $this->checker;
+
+        if ($checker instanceof CachedChecker) {
+            $checker = $checker->getWrappedChecker();
         }
 
-        return $this->checker::class;
+        if ($checker instanceof WhitelistChecker) {
+            $checker = $checker->getWrappedChecker();
+        }
+
+        if ($checker instanceof ChainChecker) {
+            return $checker->getLastMatchedChecker() ?? $checker::class;
+        }
+
+        return $checker::class;
     }
 }

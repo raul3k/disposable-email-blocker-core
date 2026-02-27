@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Raul3k\DisposableBlocker\Core\Tests\Unit;
 
+use Raul3k\DisposableBlocker\Core\Cache\ArrayCache;
 use Raul3k\DisposableBlocker\Core\Checkers\CallbackChecker;
 use Raul3k\DisposableBlocker\Core\Checkers\FileChecker;
 use Raul3k\DisposableBlocker\Core\CheckResult;
@@ -322,12 +323,28 @@ class DisposableEmailCheckerTest extends TestCase
         $checker = DisposableEmailChecker::builder()
             ->withDomainsFile($this->tempFile)
             ->withWhitelist(['example.com'])
-            ->withCache(new \Raul3k\DisposableBlocker\Core\Cache\ArrayCache())
+            ->withCache(new ArrayCache())
             ->build();
 
         $result = $checker->checkDomain('example.com');
 
         $this->assertTrue($result->isWhitelisted());
         $this->assertFalse($result->isDisposable());
+    }
+
+    public function testCheckReturnsActualCheckerNameThroughDecoratorChain(): void
+    {
+        $this->tempFile = $this->createTempFile('mailinator.com');
+
+        $checker = DisposableEmailChecker::builder()
+            ->withDomainsFile($this->tempFile)
+            ->withWhitelist(['safe.com'])
+            ->withCache(new ArrayCache())
+            ->build();
+
+        $result = $checker->check('user@mailinator.com');
+
+        $this->assertTrue($result->isDisposable());
+        $this->assertSame(FileChecker::class, $result->getMatchedChecker());
     }
 }

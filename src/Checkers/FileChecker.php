@@ -78,6 +78,14 @@ class FileChecker implements CheckerInterface, Countable
             }
         }
 
+        if (!feof($handle)) {
+            fclose($handle);
+
+            throw new RuntimeException(
+                sprintf('I/O error while reading domains file: %s', $this->filePath)
+            );
+        }
+
         fclose($handle);
         $this->domains = $domains;
     }
