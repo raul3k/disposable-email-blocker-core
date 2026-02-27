@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Raul3k\DisposableBlocker\Core\Tests\Checkers;
 
+use BadMethodCallException;
 use PHPUnit\Framework\TestCase;
 use Raul3k\DisposableBlocker\Core\Cache\ArrayCache;
+use Raul3k\DisposableBlocker\Core\Cache\CacheInterface;
 use Raul3k\DisposableBlocker\Core\Checkers\CachedChecker;
 use Raul3k\DisposableBlocker\Core\Checkers\CallbackChecker;
 
@@ -89,5 +91,18 @@ class CachedCheckerTest extends TestCase
         $checker = new CachedChecker($innerChecker, $cache);
 
         $this->assertSame($cache, $checker->getCache());
+    }
+
+    public function testClearCacheReturnsFalseWhenAdapterThrows(): void
+    {
+        $cache = $this->createMock(CacheInterface::class);
+        $cache->method('clear')->willThrowException(new BadMethodCallException('Not supported'));
+        $cache->method('get')->willReturn(null);
+        $cache->method('set')->willReturn(true);
+
+        $innerChecker = new CallbackChecker(fn () => true);
+        $checker = new CachedChecker($innerChecker, $cache);
+
+        $this->assertFalse($checker->clearCache());
     }
 }

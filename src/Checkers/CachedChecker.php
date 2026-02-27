@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Raul3k\DisposableBlocker\Core\Checkers;
 
+use BadMethodCallException;
 use Raul3k\DisposableBlocker\Core\Cache\CacheInterface;
 
 /**
@@ -44,10 +45,17 @@ class CachedChecker implements CheckerInterface
 
     /**
      * Clear the cache.
+     *
+     * Returns false if the underlying cache adapter does not support clearing
+     * (e.g. PSR-6/PSR-16 adapters that cannot selectively clear prefixed keys).
      */
     public function clearCache(): bool
     {
-        return $this->cache->clear();
+        try {
+            return $this->cache->clear();
+        } catch (BadMethodCallException) {
+            return false;
+        }
     }
 
     /**

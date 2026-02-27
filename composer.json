@@ -32,7 +32,9 @@
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.0",
         "phpstan/phpstan": "^1.10",
-        "phpunit/phpunit": "^10.0"
+        "phpunit/phpunit": "^10.0",
+        "psr/cache": "^3.0",
+        "psr/simple-cache": "^3.0"
     },
     "suggest": {
         "psr/cache": "For PSR-6 cache adapter support",

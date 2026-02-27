@@ -37,6 +37,10 @@ class Psr6Adapter implements CacheInterface
 
     public function set(string $key, mixed $value, ?int $ttl = null): bool
     {
+        if ($ttl !== null && $ttl < 0) {
+            return false;
+        }
+
         $item = $this->pool->getItem($this->prefix . $key);
         $item->set($value);
 
