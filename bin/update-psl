@@ -1,0 +1,218 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Updates the bundled Public Suffix List (PSL) .dat file.
+ *
+ * Source: https://publicsuffix.org/list/public_suffix_list.dat
+ *
+ * Usage:
+ *   ./bin/update-psl [--dry-run] [--output=path] [--verbose]
+ *
+ * Options:
+ *   --dry-run       Show what would be fetched without writing
+ *   --output=path   Custom output path (default: src/Resources/public_suffix_list.dat)
+ *   --verbose       Show progress details
+ */
+
+// Find autoloader
+$autoloadPaths = [
+    __DIR__ . '/../vendor/autoload.php',      // Running from package directly
+    __DIR__ . '/../../../autoload.php',        // Running from vendor/bin
+    getcwd() . '/vendor/autoload.php',         // Running from project root
+];
+
+$autoloaded = false;
+foreach ($autoloadPaths as $autoloadPath) {
+    if (is_file($autoloadPath)) {
+        require_once $autoloadPath;
+        $autoloaded = true;
+        break;
+    }
+}
+
+if (!$autoloaded) {
+    fwrite(STDERR, "Could not find autoload.php. Run composer install first.\n");
+    exit(1);
+}
+
+use Pdp\Rules;
+
+// Parse arguments
+$options = getopt('', ['dry-run', 'output:', 'verbose', 'help']);
+$args = array_slice($argv, 1);
+
+if (isset($options['help']) || in_array('--help', $args) || in_array('-h', $args)) {
+    echo <<<HELP
+Update Public Suffix List
+
+Usage:
+  ./bin/update-psl [options]
+  vendor/bin/update-psl [options]
+
+Options:
+  --dry-run       Download and validate without writing the file
+  --output=path   Custom output path (default: src/Resources/public_suffix_list.dat)
+  --verbose       Show detailed progress
+  --help          Show this help message
+
+Source:
+  https://publicsuffix.org/list/public_suffix_list.dat
+
+Examples:
+  ./bin/update-psl
+  ./bin/update-psl --dry-run
+  ./bin/update-psl --output=storage/public_suffix_list.dat
+  ./bin/update-psl --verbose
+
+HELP;
+    exit(0);
+}
+
+$dryRun = isset($options['dry-run']) || in_array('--dry-run', $args);
+$verbose = isset($options['verbose']) || in_array('--verbose', $args);
+
+// Output helpers
+function info(string $message): void {
+    echo "\033[34m[INFO]\033[0m $message\n";
+}
+
+function success(string $message): void {
+    echo "\033[32m[OK]\033[0m $message\n";
+}
+
+function warning(string $message): void {
+    echo "\033[33m[WARN]\033[0m $message\n";
+}
+
+function error(string $message): void {
+    echo "\033[31m[ERROR]\033[0m $message\n";
+}
+
+function progress(string $message): void {
+    global $verbose;
+    if ($verbose) {
+        echo "  → $message\n";
+    }
+}
+
+// Constants
+const PSL_URL       = 'https://publicsuffix.org/list/public_suffix_list.dat';
+const PSL_MIN_BYTES = 200_000;
+const PSL_MIN_LINES = 10_000;
+
+// Main
+echo "\n";
+echo "╔════════════════════════════════════════════════════════════╗\n";
+echo "║         Public Suffix List Updater                         ║\n";
+echo "╚════════════════════════════════════════════════════════════╝\n";
+echo "\n";
+
+info("Source: " . PSL_URL);
+
+// Download
+$context = stream_context_create([
+    'http' => [
+        'method'          => 'GET',
+        'timeout'         => 30,
+        'follow_location' => 1,
+        'user_agent'      => 'disposable-email-blocker-core/bin-update-psl',
+        'header'          => "Accept: text/plain\r\n",
+    ],
+]);
+
+progress("Downloading...");
+$startTime = microtime(true);
+$content   = @file_get_contents(PSL_URL, false, $context);
+$elapsed   = round(microtime(true) - $startTime, 2);
+
+if ($content === false) {
+    error("Failed to download PSL from " . PSL_URL);
+    exit(1);
+}
+
+$bytes = strlen($content);
+$sizeKb = round($bytes / 1024, 1);
+success("Downloaded {$sizeKb} KB in {$elapsed}s");
+
+// Validation
+echo "\n";
+info("Validating downloaded content...");
+
+if ($bytes < PSL_MIN_BYTES) {
+    error("Content too small ({$sizeKb} KB). Expected at least " . round(PSL_MIN_BYTES / 1024) . " KB.");
+    exit(1);
+}
+progress("Size check passed ({$sizeKb} KB)");
+
+$lineCount = substr_count($content, "\n");
+if ($lineCount < PSL_MIN_LINES) {
+    error("Too few lines ($lineCount). Expected at least " . number_format(PSL_MIN_LINES) . ".");
+    exit(1);
+}
+progress("Line count check passed (" . number_format($lineCount) . " lines)");
+
+if (!str_contains($content, '===BEGIN ICANN DOMAINS===')) {
+    error("Missing '===BEGIN ICANN DOMAINS===' marker.");
+    exit(1);
+}
+progress("ICANN section marker found");
+
+if (!str_contains($content, '===BEGIN PRIVATE DOMAINS===')) {
+    error("Missing '===BEGIN PRIVATE DOMAINS===' marker.");
+    exit(1);
+}
+progress("Private section marker found");
+
+progress("Parsing with Rules::fromString()...");
+try {
+    Rules::fromString($content);
+    success("PSL parsed successfully");
+} catch (\Throwable $e) {
+    error("PSL parse failed: " . $e->getMessage());
+    exit(1);
+}
+
+echo "\n";
+
+// Statistics
+echo "╔════════════════════════════════════════════════════════════╗\n";
+echo "║                      Statistics                           ║\n";
+echo "╚════════════════════════════════════════════════════════════╝\n";
+echo "\n";
+echo "  Size  : {$sizeKb} KB\n";
+echo "  Lines : " . number_format($lineCount) . "\n";
+echo "\n";
+
+if ($dryRun) {
+    warning("Dry run - no file written");
+    echo "\n";
+    exit(0);
+}
+
+// Write
+$defaultOutputPath = __DIR__ . '/../src/Resources/public_suffix_list.dat';
+$outputPath = $options['output'] ?? $defaultOutputPath;
+
+$outputDir = dirname($outputPath);
+if (!is_dir($outputDir)) {
+    if (!mkdir($outputDir, 0755, true)) {
+        error("Failed to create output directory: $outputDir");
+        exit(1);
+    }
+}
+
+info("Writing to: $outputPath");
+
+$bytesWritten = file_put_contents($outputPath, $content);
+
+if ($bytesWritten === false) {
+    error("Failed to write file!");
+    exit(1);
+}
+
+$writtenKb = round($bytesWritten / 1024, 1);
+success("Written {$writtenKb} KB to $outputPath");
+echo "\n";
