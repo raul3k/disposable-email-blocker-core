@@ -15,6 +15,7 @@ Fast disposable/temporary email detection with full Public Suffix List (PSL) sup
 - [Caching](#caching)
 - [Custom Checkers](#custom-checkers)
 - [Working with Sources](#working-with-sources)
+- [Updating the Public Suffix List](#updating-the-public-suffix-list)
 - [Domain Info](#domain-info)
 - [Domain Normalization](#domain-normalization)
 - [Framework Integration](#framework-integration)
@@ -34,7 +35,7 @@ Fast disposable/temporary email detection with full Public Suffix List (PSL) sup
 - **Multiple checkers** - file-based, callback-based, or chain multiple checkers
 - **Domain parsing** - `DomainInfo` for detailed domain analysis (PSL, subdomain, IDN)
 - **Extensible sources** - built-in sources + custom parsers for any format
-- **CLI tool** - `bin/update-domains` to fetch and merge domain lists
+- **CLI tools** - `bin/update-domains` to fetch and merge domain lists, `bin/update-psl` to update the Public Suffix List
 - **Framework agnostic** - use with any PHP project
 
 ## Installation
@@ -455,6 +456,28 @@ return [
     'output_path' => __DIR__ . '/storage/disposable_domains.txt',
 ];
 ```
+
+## Updating the Public Suffix List
+
+The library bundles a copy of the [Public Suffix List](https://publicsuffix.org/) for domain normalization. To update it:
+
+```bash
+# Update to the latest PSL
+./bin/update-psl
+
+# Preview without writing
+./bin/update-psl --dry-run
+
+# Show detailed progress
+./bin/update-psl --verbose
+
+# Custom output path
+./bin/update-psl --output=storage/public_suffix_list.dat
+```
+
+The script downloads from the canonical source, validates the content (size, structure, and parse checks), and writes the updated file.
+
+A GitHub Actions workflow runs monthly to keep the bundled PSL current via automated PRs.
 
 ## Domain Info
 
