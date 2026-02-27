@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1](https://github.com/raul3k/disposable-email-blocker-core/compare/v2.0.0...v2.0.1) (2026-02-27)
+
+
+### Bug Fixes
+
+* handle edge cases in cache adapters, file reader and decorator chain ([#11](https://github.com/raul3k/disposable-email-blocker-core/issues/11)) ([48b14e6](https://github.com/raul3k/disposable-email-blocker-core/commit/48b14e676053d8061ec0092f54fe69cec233a65f))
+
 ## [2.0.0](https://github.com/raul3k/disposable-email-blocker-core/compare/v1.0.0...v2.0.0) (2026-02-26)
 
 
