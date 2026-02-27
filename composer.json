@@ -41,7 +41,8 @@
         "psr/simple-cache": "For PSR-16 cache adapter support"
     },
     "bin": [
-        "bin/update-domains"
+        "bin/update-domains",
+        "bin/update-psl"
     ],
     "autoload": {
         "psr-4": {
