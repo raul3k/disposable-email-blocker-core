@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Tests;
+namespace Raul3k\DisposableBlocker\Core\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Raul3k\BlockDisposable\Core\CheckResult;
+use Raul3k\DisposableBlocker\Core\CheckResult;
 
 class CheckResultTest extends TestCase
 {

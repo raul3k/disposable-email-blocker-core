@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Cache;
+namespace Raul3k\DisposableBlocker\Core\Cache;
 
+use BadMethodCallException;
 use Psr\SimpleCache\CacheInterface as PsrCacheInterface;
 
 /**
@@ -44,9 +45,8 @@ class Psr16Adapter implements CacheInterface
 
     public function clear(): bool
     {
-        // PSR-16 clear() clears all cache, not just our prefixed keys
-        // This might not be desired behavior, so we just return true
-        // without actually clearing
-        return true;
+        throw new BadMethodCallException(
+            'clear() is not supported on PSR-16 adapter because it would flush the entire cache store.'
+        );
     }
 }

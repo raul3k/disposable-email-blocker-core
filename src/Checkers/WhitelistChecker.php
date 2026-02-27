@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Checkers;
+namespace Raul3k\DisposableBlocker\Core\Checkers;
 
 /**
  * Decorator that wraps another checker and allows whitelisting specific domains.
@@ -30,15 +30,13 @@ class WhitelistChecker implements CheckerInterface
 
     public function isDomainDisposable(string $normalizedDomain): bool
     {
-        $domain = strtolower($normalizedDomain);
+        $normalizedDomain = strtolower($normalizedDomain);
 
-        // Check exact match
-        if (isset($this->whitelist[$domain])) {
+        if (isset($this->whitelist[$normalizedDomain])) {
             return false;
         }
 
-        // Check parent domain (e.g., sub.example.com -> example.com)
-        $parts = explode('.', $domain);
+        $parts = explode('.', $normalizedDomain);
         while (count($parts) > 2) {
             array_shift($parts);
             $parentDomain = implode('.', $parts);

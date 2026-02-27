@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Checkers;
+namespace Raul3k\DisposableBlocker\Core\Checkers;
+
+use InvalidArgumentException;
 
 /**
  * Checker that detects disposable email patterns using regex.
@@ -12,6 +14,8 @@ namespace Raul3k\BlockDisposable\Core\Checkers;
  */
 class PatternChecker implements CheckerInterface
 {
+    private const MAX_CACHE_SIZE = 10000;
+
     /** @var array<string> */
     private array $patterns;
 
@@ -34,15 +38,24 @@ class PatternChecker implements CheckerInterface
 
         foreach ($this->patterns as $pattern) {
             if (preg_match($pattern, $normalizedDomain) === 1) {
-                $this->cache[$normalizedDomain] = true;
+                $this->cacheResult($normalizedDomain, true);
 
                 return true;
             }
         }
 
-        $this->cache[$normalizedDomain] = false;
+        $this->cacheResult($normalizedDomain, false);
 
         return false;
+    }
+
+    private function cacheResult(string $domain, bool $result): void
+    {
+        if (count($this->cache) >= self::MAX_CACHE_SIZE) {
+            $this->cache = array_slice($this->cache, (int) (self::MAX_CACHE_SIZE / 2), preserve_keys: true);
+        }
+
+        $this->cache[$domain] = $result;
     }
 
     /**
@@ -60,8 +73,14 @@ class PatternChecker implements CheckerInterface
      */
     public function addPattern(string $pattern): self
     {
+        if (@preg_match($pattern, '') === false) {
+            throw new InvalidArgumentException(
+                sprintf('Invalid regex pattern: %s', $pattern)
+            );
+        }
+
         $this->patterns[] = $pattern;
-        $this->cache = []; // Clear cache when patterns change
+        $this->cache = [];
 
         return $this;
     }
@@ -84,11 +103,11 @@ class PatternChecker implements CheckerInterface
         return [
             // Temporary/disposable keywords
             '/^temp(?:mail|email|inbox)?[.-]?/i',
-            '/[.-]?temp(?:mail|email|inbox)?$/i',
+            '/[.-]temp(?:mail|email|inbox)?\./i',
             '/^disposable[.-]?/i',
-            '/[.-]?disposable$/i',
+            '/[.-]disposable\./i',
             '/^throwaway[.-]?/i',
-            '/[.-]?throwaway$/i',
+            '/[.-]throwaway\./i',
             '/^trash[.-]?(?:mail|email)?/i',
             '/^junk[.-]?(?:mail|email)?/i',
             '/^fake[.-]?(?:mail|email|inbox)?/i',

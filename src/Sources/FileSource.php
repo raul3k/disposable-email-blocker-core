@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Sources;
+namespace Raul3k\DisposableBlocker\Core\Sources;
 
-use Raul3k\BlockDisposable\Core\Parsers\ParserInterface;
-use Raul3k\BlockDisposable\Core\Parsers\TextLineParser;
+use Raul3k\DisposableBlocker\Core\Parsers\ParserInterface;
+use Raul3k\DisposableBlocker\Core\Parsers\TextLineParser;
 use RuntimeException;
 
 class FileSource implements SourceInterface
@@ -13,7 +13,7 @@ class FileSource implements SourceInterface
     private readonly ParserInterface $parser;
 
     public function __construct(
-        private readonly string $filePath,
+        private readonly string $path,
         private readonly string $name = 'file',
         ?ParserInterface $parser = null
     ) {
@@ -37,24 +37,24 @@ class FileSource implements SourceInterface
 
     public function fetch(): iterable
     {
-        if (!is_file($this->filePath) || !is_readable($this->filePath)) {
+        if (!is_file($this->path) || !is_readable($this->path)) {
             throw new RuntimeException(
-                sprintf('Cannot read source file: %s', $this->filePath)
+                sprintf('Cannot read source file: %s', $this->path)
             );
         }
 
-        $content = file_get_contents($this->filePath);
+        $content = file_get_contents($this->path);
         if ($content === false) {
             throw new RuntimeException(
-                sprintf('Failed to read source file: %s', $this->filePath)
+                sprintf('Failed to read source file: %s', $this->path)
             );
         }
 
         return $this->parser->parse($content);
     }
 
-    public function getFilePath(): string
+    public function getPath(): string
     {
-        return $this->filePath;
+        return $this->path;
     }
 }

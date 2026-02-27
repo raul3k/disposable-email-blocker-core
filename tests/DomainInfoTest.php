@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Tests;
+namespace Raul3k\DisposableBlocker\Core\Tests;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Raul3k\BlockDisposable\Core\DomainInfo;
+use Raul3k\DisposableBlocker\Core\DomainInfo;
 
 class DomainInfoTest extends TestCase
 {

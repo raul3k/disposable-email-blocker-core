@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Cache;
+namespace Raul3k\DisposableBlocker\Core\Cache;
 
 use JsonException;
 use RuntimeException;
@@ -15,6 +15,10 @@ use RuntimeException;
  */
 class FileCache implements CacheInterface
 {
+    private const GC_PROBABILITY = 5;
+
+    private const GC_DIVISOR = 100;
+
     private string $directory;
 
     /**
@@ -89,6 +93,10 @@ class FileCache implements CacheInterface
         }
 
         $written = file_put_contents($path, $content, LOCK_EX);
+
+        if (random_int(1, self::GC_DIVISOR) <= self::GC_PROBABILITY) {
+            $this->gc();
+        }
 
         return $written !== false;
     }

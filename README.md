@@ -25,7 +25,7 @@ composer require raul3k/disposable-email-blocker-core
 ## Quick Start
 
 ```php
-use Raul3k\BlockDisposable\Core\DisposableEmailChecker;
+use Raul3k\DisposableBlocker\Core\DisposableEmailChecker;
 
 $checker = DisposableEmailChecker::create();
 
@@ -45,7 +45,7 @@ $checker->isDomainDisposable('tempmail.com');  // true
 Get detailed information about the check result:
 
 ```php
-use Raul3k\BlockDisposable\Core\DisposableEmailChecker;
+use Raul3k\DisposableBlocker\Core\DisposableEmailChecker;
 
 $checker = DisposableEmailChecker::create();
 
@@ -56,7 +56,7 @@ $result->isDisposable();      // true
 $result->isSafe();            // false
 $result->getDomain();         // 'mailinator.com'
 $result->getOriginalInput();  // 'test@mailinator.com'
-$result->getMatchedChecker(); // 'Raul3k\BlockDisposable\Core\Checkers\FileChecker'
+$result->getMatchedChecker(); // 'Raul3k\DisposableBlocker\Core\Checkers\FileChecker'
 $result->getConfidence();     // 1.0 (high confidence)
 $result->isWhitelisted();     // false
 $result->toArray();           // array representation
@@ -68,7 +68,7 @@ $result->toJson();            // JSON string
 Check multiple emails efficiently:
 
 ```php
-use Raul3k\BlockDisposable\Core\DisposableEmailChecker;
+use Raul3k\DisposableBlocker\Core\DisposableEmailChecker;
 
 $checker = DisposableEmailChecker::create();
 
@@ -92,8 +92,8 @@ $results = $checker->checkBatch($emails);
 Detect suspicious domain patterns using regex:
 
 ```php
-use Raul3k\BlockDisposable\Core\DisposableEmailChecker;
-use Raul3k\BlockDisposable\Core\Checkers\{ChainChecker, FileChecker, PatternChecker};
+use Raul3k\DisposableBlocker\Core\DisposableEmailChecker;
+use Raul3k\DisposableBlocker\Core\Checkers\{ChainChecker, FileChecker, PatternChecker};
 
 // Combine file-based checking with pattern matching
 $checker = DisposableEmailChecker::create(
@@ -119,8 +119,8 @@ $patternChecker->addPattern('/^suspicious-/i');
 Allow specific domains to bypass disposable checks:
 
 ```php
-use Raul3k\BlockDisposable\Core\DisposableEmailChecker;
-use Raul3k\BlockDisposable\Core\Checkers\{FileChecker, WhitelistChecker};
+use Raul3k\DisposableBlocker\Core\DisposableEmailChecker;
+use Raul3k\DisposableBlocker\Core\Checkers\{FileChecker, WhitelistChecker};
 
 $innerChecker = new FileChecker(__DIR__ . '/domains.txt');
 $whitelistChecker = new WhitelistChecker($innerChecker, [
@@ -143,9 +143,9 @@ $whitelistChecker->isWhitelisted('sub.company.com'); // true (parent is whitelis
 Add caching to improve performance for repeated checks:
 
 ```php
-use Raul3k\BlockDisposable\Core\DisposableEmailChecker;
-use Raul3k\BlockDisposable\Core\Checkers\{FileChecker, CachedChecker};
-use Raul3k\BlockDisposable\Core\Cache\{ArrayCache, FileCache};
+use Raul3k\DisposableBlocker\Core\DisposableEmailChecker;
+use Raul3k\DisposableBlocker\Core\Checkers\{FileChecker, CachedChecker};
+use Raul3k\DisposableBlocker\Core\Cache\{ArrayCache, FileCache};
 
 // In-memory cache (single request)
 $cache = new ArrayCache();
@@ -165,7 +165,7 @@ $checker = DisposableEmailChecker::create($cachedChecker);
 Use any PSR-compatible cache:
 
 ```php
-use Raul3k\BlockDisposable\Core\Cache\{Psr6Adapter, Psr16Adapter};
+use Raul3k\DisposableBlocker\Core\Cache\{Psr6Adapter, Psr16Adapter};
 
 // PSR-16 (SimpleCache)
 $cache = new Psr16Adapter($yourPsr16Cache);
@@ -181,8 +181,8 @@ $cachedChecker = new CachedChecker($innerChecker, $cache);
 ### Using a Callback (Redis, Database, API, etc.)
 
 ```php
-use Raul3k\BlockDisposable\Core\DisposableEmailChecker;
-use Raul3k\BlockDisposable\Core\Checkers\CallbackChecker;
+use Raul3k\DisposableBlocker\Core\DisposableEmailChecker;
+use Raul3k\DisposableBlocker\Core\Checkers\CallbackChecker;
 
 // Redis example
 $checker = DisposableEmailChecker::create(
@@ -200,8 +200,8 @@ $checker = DisposableEmailChecker::create(
 ### Using a Custom File
 
 ```php
-use Raul3k\BlockDisposable\Core\DisposableEmailChecker;
-use Raul3k\BlockDisposable\Core\Checkers\FileChecker;
+use Raul3k\DisposableBlocker\Core\DisposableEmailChecker;
+use Raul3k\DisposableBlocker\Core\Checkers\FileChecker;
 
 $checker = DisposableEmailChecker::create(
     new FileChecker('/path/to/your/domains.txt')
@@ -211,8 +211,8 @@ $checker = DisposableEmailChecker::create(
 ### Chaining Multiple Checkers
 
 ```php
-use Raul3k\BlockDisposable\Core\DisposableEmailChecker;
-use Raul3k\BlockDisposable\Core\Checkers\{ChainChecker, FileChecker, PatternChecker, CallbackChecker};
+use Raul3k\DisposableBlocker\Core\DisposableEmailChecker;
+use Raul3k\DisposableBlocker\Core\Checkers\{ChainChecker, FileChecker, PatternChecker, CallbackChecker};
 
 $checker = DisposableEmailChecker::create(
     new ChainChecker([
@@ -244,7 +244,7 @@ Sources provide lists of disposable domains. The library includes several pre-co
 ### Fetching from Sources
 
 ```php
-use Raul3k\BlockDisposable\Core\Sources\SourceRegistry;
+use Raul3k\DisposableBlocker\Core\Sources\SourceRegistry;
 
 $registry = new SourceRegistry();
 
@@ -262,8 +262,8 @@ foreach ($source->fetch() as $domain) {
 ### Adding Custom Sources
 
 ```php
-use Raul3k\BlockDisposable\Core\Sources\{SourceRegistry, UrlSource};
-use Raul3k\BlockDisposable\Core\Parsers\{TextLineParser, JsonArrayParser};
+use Raul3k\DisposableBlocker\Core\Sources\{SourceRegistry, UrlSource};
+use Raul3k\DisposableBlocker\Core\Parsers\{TextLineParser, JsonArrayParser};
 
 $registry = new SourceRegistry();
 
@@ -294,7 +294,7 @@ $registry->register(new UrlSource(
 The library normalizes domains using the Public Suffix List to correctly extract registrable domains:
 
 ```php
-use Raul3k\BlockDisposable\Core\DomainNormalizer;
+use Raul3k\DisposableBlocker\Core\DomainNormalizer;
 
 $normalizer = new DomainNormalizer();
 
@@ -311,9 +311,8 @@ $normalizer->normalizeDomain('пример.рф'); // 'xn--e1afmkfd.xn--p1ai'
 
 ## Framework Integration
 
-For Laravel and Symfony integration, see:
+For Laravel integration, see:
 - [raul3k/disposable-email-blocker-laravel](https://github.com/raul3k/disposable-email-blocker-laravel)
-- [raul3k/disposable-email-blocker-symfony](https://github.com/raul3k/disposable-email-blocker-symfony)
 
 ## Development
 

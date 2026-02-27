@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core;
+namespace Raul3k\DisposableBlocker\Core;
 
 /**
  * Parsed domain information.
@@ -18,6 +18,8 @@ namespace Raul3k\BlockDisposable\Core;
  */
 final class DomainInfo
 {
+    private static ?DomainNormalizer $sharedNormalizer = null;
+
     private function __construct(
         private readonly string $originalInput,
         private readonly ?string $fullHost,
@@ -35,12 +37,18 @@ final class DomainInfo
 
     /**
      * Parse a domain or email address.
+     *
+     * Uses a shared DomainNormalizer instance. For hot loops or batch processing,
+     * prefer {@see parseWithNormalizer()} with a pre-built normalizer to avoid
+     * the overhead of lazy-initialization checks on every call.
      */
     public static function parse(string $input): self
     {
-        $normalizer = new DomainNormalizer();
+        if (self::$sharedNormalizer === null) {
+            self::$sharedNormalizer = new DomainNormalizer();
+        }
 
-        return self::parseWithNormalizer($input, $normalizer);
+        return self::parseWithNormalizer($input, self::$sharedNormalizer);
     }
 
     /**

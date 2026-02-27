@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core;
+namespace Raul3k\DisposableBlocker\Core;
 
 use Pdp\Domain;
 use Pdp\ResolvedDomainName;
 use Pdp\Rules;
-use Raul3k\BlockDisposable\Core\Exceptions\InvalidDomainException;
+use Raul3k\DisposableBlocker\Core\Exceptions\InvalidDomainException;
 
 class DomainNormalizer
 {
@@ -15,6 +15,11 @@ class DomainNormalizer
 
     private readonly string $pslPath;
 
+    /**
+     * @param string|null $pslPath Path to a Public Suffix List file. Defaults to the bundled list.
+     *                             The PSL (~328 KB) is parsed lazily on first use and cached for
+     *                             the lifetime of this instance. Reuse a single instance when possible.
+     */
     public function __construct(?string $pslPath = null)
     {
         $this->pslPath = $pslPath ?? $this->getDefaultPslPath();
@@ -128,7 +133,11 @@ class DomainNormalizer
 
         $ascii = idn_to_ascii($domain, IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46);
 
-        return $ascii !== false ? $ascii : $domain;
+        if ($ascii === false) {
+            throw InvalidDomainException::forDomain($domain);
+        }
+
+        return $ascii;
     }
 
     private function extractRegistrableDomain(string $domain): ?string

@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Tests\Unit\Sources;
+namespace Raul3k\DisposableBlocker\Core\Tests\Unit\Sources;
 
-use Raul3k\BlockDisposable\Core\Parsers\JsonArrayParser;
-use Raul3k\BlockDisposable\Core\Parsers\TextLineParser;
-use Raul3k\BlockDisposable\Core\Sources\FileSource;
-use Raul3k\BlockDisposable\Core\Tests\TestCase;
+use Raul3k\DisposableBlocker\Core\Parsers\JsonArrayParser;
+use Raul3k\DisposableBlocker\Core\Parsers\TextLineParser;
+use Raul3k\DisposableBlocker\Core\Sources\FileSource;
+use Raul3k\DisposableBlocker\Core\Tests\TestCase;
 use RuntimeException;
 
 class FileSourceTest extends TestCase
@@ -88,13 +88,13 @@ class FileSourceTest extends TestCase
         $this->assertSame(['mailinator.com', 'temp-mail.org'], $domains);
     }
 
-    public function testGetFilePath(): void
+    public function testGetPath(): void
     {
         $this->tempFile = $this->createTempFile('');
 
         $source = new FileSource($this->tempFile);
 
-        $this->assertSame($this->tempFile, $source->getFilePath());
+        $this->assertSame($this->tempFile, $source->getPath());
     }
 
     public function testThrowsExceptionForNonExistentFile(): void

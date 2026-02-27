@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Tests\Checkers;
+namespace Raul3k\DisposableBlocker\Core\Tests\Checkers;
 
 use PHPUnit\Framework\TestCase;
-use Raul3k\BlockDisposable\Core\Cache\ArrayCache;
-use Raul3k\BlockDisposable\Core\Checkers\CachedChecker;
-use Raul3k\BlockDisposable\Core\Checkers\CallbackChecker;
+use Raul3k\DisposableBlocker\Core\Cache\ArrayCache;
+use Raul3k\DisposableBlocker\Core\Checkers\CachedChecker;
+use Raul3k\DisposableBlocker\Core\Checkers\CallbackChecker;
 
 class CachedCheckerTest extends TestCase
 {

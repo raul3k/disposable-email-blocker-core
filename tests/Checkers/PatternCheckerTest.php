@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core\Tests\Checkers;
+namespace Raul3k\DisposableBlocker\Core\Tests\Checkers;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Raul3k\BlockDisposable\Core\Checkers\PatternChecker;
+use Raul3k\DisposableBlocker\Core\Checkers\PatternChecker;
 
 class PatternCheckerTest extends TestCase
 {

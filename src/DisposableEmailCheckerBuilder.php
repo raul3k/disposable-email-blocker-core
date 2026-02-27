@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace Raul3k\BlockDisposable\Core;
+namespace Raul3k\DisposableBlocker\Core;
 
 use Closure;
-use Raul3k\BlockDisposable\Core\Cache\CacheInterface;
-use Raul3k\BlockDisposable\Core\Cache\FileCache;
-use Raul3k\BlockDisposable\Core\Checkers\CachedChecker;
-use Raul3k\BlockDisposable\Core\Checkers\CallbackChecker;
-use Raul3k\BlockDisposable\Core\Checkers\ChainChecker;
-use Raul3k\BlockDisposable\Core\Checkers\CheckerInterface;
-use Raul3k\BlockDisposable\Core\Checkers\FileChecker;
-use Raul3k\BlockDisposable\Core\Checkers\PatternChecker;
-use Raul3k\BlockDisposable\Core\Checkers\WhitelistChecker;
+use Raul3k\DisposableBlocker\Core\Cache\CacheInterface;
+use Raul3k\DisposableBlocker\Core\Cache\FileCache;
+use Raul3k\DisposableBlocker\Core\Checkers\CachedChecker;
+use Raul3k\DisposableBlocker\Core\Checkers\CallbackChecker;
+use Raul3k\DisposableBlocker\Core\Checkers\ChainChecker;
+use Raul3k\DisposableBlocker\Core\Checkers\CheckerInterface;
+use Raul3k\DisposableBlocker\Core\Checkers\FileChecker;
+use Raul3k\DisposableBlocker\Core\Checkers\PatternChecker;
+use Raul3k\DisposableBlocker\Core\Checkers\WhitelistChecker;
 
 /**
  * Fluent builder for DisposableEmailChecker.
