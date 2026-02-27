@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/raul3k/disposable-email-blocker-core/compare/v1.0.0...v1.1.0) (2026-02-27)
+
+
+### Features
+
+* add bin/update-psl script and monthly workflow ([#16](https://github.com/raul3k/disposable-email-blocker-core/issues/16)) ([e873d85](https://github.com/raul3k/disposable-email-blocker-core/commit/e873d85f65328fb2cb1b299f966a36b2307ba03d))
+
 ## 1.0.0 (2026-02-27)
 
 
