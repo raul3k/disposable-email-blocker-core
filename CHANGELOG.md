@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/raul3k/disposable-email-blocker-core/compare/v1.1.0...v1.1.1) (2026-03-13)
+
+
+### Bug Fixes
+
+* **ci:** add write permissions to update workflows ([#20](https://github.com/raul3k/disposable-email-blocker-core/issues/20)) ([b7cd2fb](https://github.com/raul3k/disposable-email-blocker-core/commit/b7cd2fbfb28e58bc8cf94069f857d6c03d662764))
+
 ## [1.1.0](https://github.com/raul3k/disposable-email-blocker-core/compare/v1.0.0...v1.1.0) (2026-02-27)
 
 
