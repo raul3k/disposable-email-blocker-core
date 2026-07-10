@@ -2,6 +2,13 @@
 
 Fast disposable/temporary email detection with full Public Suffix List (PSL) support, pattern matching, caching, and whitelist capabilities.
 
+**This repository is also a reference source for disposable/temporary email domains.** Even if you don't use the PHP library, you can rely on it as a single, consolidated, always up-to-date list of disposable email domains, plus a fresh copy of the Public Suffix List. Automated workflows keep both files current under [`src/Resources/`](src/Resources/):
+
+- [`disposable_domains.txt`](src/Resources/disposable_domains.txt) - the consolidated, deduplicated list of disposable/temporary email domains, merged from multiple upstream sources.
+- [`public_suffix_list.dat`](src/Resources/public_suffix_list.dat) - an up-to-date copy of the official Public Suffix List.
+
+Consume these files directly (raw download, git submodule, or your own tooling) in any language or stack - no PHP required.
+
 ## Table of Contents
 
 - [Features](#features)
