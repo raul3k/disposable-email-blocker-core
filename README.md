@@ -367,6 +367,7 @@ Sources provide lists of disposable domains. The library includes several pre-co
 | `mailchecker` | Text | ~56k |
 | `ivolo-disposable` | JSON | ~122k |
 | `fakefilter` | Text | ~10k |
+| `disposable/disposable` | Text | ~10k |
 
 ### Fetching from Sources
 
