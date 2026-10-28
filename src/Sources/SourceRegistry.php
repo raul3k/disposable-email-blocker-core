@@ -116,5 +116,12 @@ class SourceRegistry
             name: 'fakefilter',
             parser: new TextLineParser()
         ));
+
+        // https://github.com/disposable/disposable
+        $this->register(new UrlSource(
+            url: 'https://raw.githubusercontent.com/disposable/disposable-email-domains/master/domains.txt',
+            name: 'disposable_disposable',
+            parser: new TextLineParser()
+        ));
     }
 }
