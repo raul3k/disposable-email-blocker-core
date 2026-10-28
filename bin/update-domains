@@ -109,6 +109,7 @@ Built-in Sources:
   - mailchecker
   - ivolo-disposable
   - fakefilter
+  - disposable/disposable
 
 Examples:
   ./bin/update-domains
